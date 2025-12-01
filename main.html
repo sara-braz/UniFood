@@ -1,0 +1,321 @@
+<!DOCTYPE html>
+<html lang="pt">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>UniFood - Sistema de Restauração ISCTE</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <!-- Header -->
+    <header>
+        <div class="logo-area">
+            <div class="logo">UniFood</div>
+        </div>
+        <div class="user-info" id="userInfo" style="display: none;">
+            <div class="user-avatar" id="userAvatar">EU</div>
+            <span id="userName">Estudante</span>
+        </div>
+    </header>
+
+    <!-- Página de Login -->
+    <section id="loginPage" class="page active">
+        <div class="container">
+            <div class="login-container">
+                <h2>Login</h2>
+                <form id="loginForm">
+                    <div class="form-group">
+                        <label for="email">Email Institucional</label>
+                        <input type="email" id="email" placeholder="exemplo@iscte-iul.pt" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="password">Palavra-passe</label>
+                        <input type="password" id="password" required>
+                    </div>
+                    <button type="submit" class="btn btn-primary">Entrar</button>
+                </form>
+                <p class="login-register">
+                    Ainda não tem conta? <a href="#" class="register-link">Registe-se aqui</a>
+                </p>
+            </div>
+        </div>
+    </section>
+
+    <!-- Menu Principal -->
+    <section id="mainMenuPage" class="page">
+        <div class="container">
+            <div class="welcome-section">
+                <h1>Bem-vindo ao UniFood</h1>
+                <p>Sistema de Restauração para a Comunidade ISCTE</p>
+            </div>
+            
+            <div class="features-grid">
+                <div class="feature-card" data-page="restaurantsPage">
+                    <div class="feature-icon">🍽️</div>
+                    <h3>Consultar Restaurantes</h3>
+                    <p>Veja todos os restaurantes e cafés disponíveis</p>
+                </div>
+                
+                <div class="feature-card" data-page="menusPage">
+                    <div class="feature-icon">📋</div>
+                    <h3>Visualizar Menus</h3>
+                    <p>Consulte os menus de cada estabelecimento</p>
+                </div>
+                
+                <div class="feature-card" data-page="reservationPage">
+                    <div class="feature-icon">📅</div>
+                    <h3>Reservar Refeição</h3>
+                    <p>Faça a sua reserva através do sistema de senhas</p>
+                </div>
+                
+                <div class="feature-card" data-page="paymentPage">
+                    <div class="feature-icon">💳</div>
+                    <h3>Pagamento Online</h3>
+                    <p>Efetue pagamentos de forma rápida e segura</p>
+                </div>                
+            </div>
+        </div>
+    </section>
+    
+    
+
+    <!-- Página de Restaurantes -->
+    <section id="restaurantsPage" class="page">
+        <div class="container">
+            <div class="section">
+                <h2>Restaurantes e Cafés Disponíveis</h2>
+                <p>Selecione um estabelecimento para ver mais informações</p>
+                
+                <div class="restaurants-grid">
+                    <!-- Cantina Principal -->
+                    <div class="restaurant-card">
+                        <div class="restaurant-image">
+                            <img src="imagens/Cantina_ISCTE.jpeg" alt="Cantina Principal">
+                        </div>
+                        <div class="restaurant-info">
+                            <h3>Cantina Principal</h3>
+                            <p class="restaurant-detail">Horário: 08h30 - 17h00</p>
+                            <p class="restaurant-detail">Localização: Edifício III, Piso 4</p>
+                            <button class="btn btn-primary reserve-btn" onclick="showReservationPage()">Fazer Reserva</button>
+                        </div>
+                    </div>
+                    
+                    <!-- Tulipa de Sintra -->
+                    <div class="restaurant-card">
+                        <div class="restaurant-image">
+                            <img src="imagens/Tulipa.jpeg" alt="Tulipa de Sintra">
+                        </div>
+                        <div class="restaurant-info">
+                            <h3>Tulipa de Sintra</h3>
+                            <p class="restaurant-detail">Horário: 07h00 - 18h00</p>
+                            <p class="restaurant-detail">Localização: Av. Heliodoro Salgado 53, 2710-575 Sintra</p>
+                            <button class="btn btn-primary reserve-btn" onclick="showReservationPage()">Fazer Reserva</button>
+                        </div>
+                    </div>
+                    
+                    <!-- KEEP- Beer & Food -->
+                    <div class="restaurant-card">
+                        <div class="restaurant-image">
+                            <img src="imagens/Keep.jpeg" alt="KEEP- Beer & Food">
+                        </div>
+                        <div class="restaurant-info">
+                            <h3>KEEP- Beer & Food</h3>
+                            <p class="restaurant-detail">Horário: 11h30 - 23h00</p>
+                            <p class="restaurant-detail">Localização: Rua Adriano Correia de Oliveira 4 B, Lisbon, Portugal 1600-312</p>
+                            <button class="btn btn-primary reserve-btn" onclick="showReservationPage()">Fazer Reserva</button>
+                        </div>
+                    </div>
+                </div>
+                
+                <button class="btn btn-ghost back-btn" onclick="showPage('mainMenuPage')">Voltar ao Menu Principal</button>
+            </div>
+        </div>
+    </section>
+
+    <!-- Página de Reserva -->
+    <section id="reservationPage" class="page">
+        <div class="container">
+            <div class="reservation-container">
+                <h2>Reserva de Refeição</h2>
+                
+                <div class="reservation-steps">
+                    <div class="step active" data-step="1">
+                        <div class="step-number">1</div>
+                        <div class="step-label">Escolha</div>
+                    </div>
+                    <div class="step" data-step="2">
+                        <div class="step-number">2</div>
+                        <div class="step-label">Pagamento</div>
+                    </div>
+                    <div class="step" data-step="3">
+                        <div class="step-number">3</div>
+                        <div class="step-label">Confirmação</div>
+                    </div>
+                </div>
+                
+                <!-- Passo 1: Escolha da modalidade -->
+                <div id="step1" class="step-content active">
+                    <h3>Escolha a modalidade da refeição</h3>
+                    <div class="meal-options">
+                        <div class="meal-option" data-type="takeaway">
+                            <h4>Take-away</h4>
+                            <p>Leve a sua refeição consigo</p>
+                        </div>
+                        <div class="meal-option" data-type="dinein">
+                            <h4>Comer no estabelecimento</h4>
+                            <p>Desfrute da sua refeição no local</p>
+                        </div>
+                    </div>
+                    
+                    <div class="navigation">
+                        <button class="btn btn-ghost" onclick="showPage('mainMenuPage')">Cancelar</button>
+                        <button class="btn btn-primary" onclick="nextStep(2)">Continuar</button>
+                    </div>
+                </div>
+                
+                <!-- Passo 2: Pagamento -->
+                <div id="step2" class="step-content">
+                    <h3>Método de Pagamento</h3>
+                    <div class="payment-methods">
+                        <label class="payment-method">
+                            <input type="radio" name="payment" value="card" checked>
+                            Cartão de Crédito/Débito
+                        </label>
+                        
+                        <label class="payment-method">
+                            <input type="radio" name="payment" value="multibanco">
+                            Multibanco
+                        </label>
+                    </div>
+                    
+                    <div class="navigation">
+                        <button class="btn btn-ghost" onclick="prevStep(1)">Voltar</button>
+                        <button class="btn btn-primary" onclick="nextStep(3)">Pagar</button>
+                    </div>
+                </div>
+                
+                <!-- Passo 3: Confirmação -->
+                <div id="step3" class="step-content">
+                    <h3>Reserva Confirmada!</h3>
+                    <p>A sua reserva foi efetuada com sucesso.</p>
+                    <p>Número da senha: <strong>#A5B2C9</strong></p>
+                    <p>Apresente esta senha no estabelecimento para levantar a sua refeição.</p>
+                    
+                    <div class="navigation">
+                        <button class="btn btn-primary" onclick="showPage('mainMenuPage')">Voltar ao Menu Principal</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <section id="paymentPage" class="page">
+        <div class="container">
+            <div class="section">
+                <h2>Pagamento Online</h2>
+                <p>Efetue pagamentos de forma rápida e segura através do nosso sistema.</p>
+                <button class="btn btn-ghost back-btn" onclick="showPage('mainMenuPage')">Voltar ao Menu Principal</button>
+            </div>
+        </div>
+    </section>
+
+    <!-- Footer -->
+    <footer>
+        © UniFood — Projeto ISCTE‑Sintra • Desenvolvido por Grupo A3
+    </footer>
+
+    <script>
+        // Função para mostrar uma página específica
+        function showPage(pageId) {
+            // Esconder todas as páginas
+            document.querySelectorAll('.page').forEach(page => {
+                page.classList.remove('active');
+            });
+            
+            // Mostrar a página solicitada
+            document.getElementById(pageId).classList.add('active');
+        }
+        
+        // Função para mostrar a página de reserva
+        function showReservationPage() {
+            showPage('reservationPage');
+            resetReservationSteps();
+        }
+        
+        // Função para avançar para o próximo passo na reserva
+        function nextStep(stepNumber) {
+            // Atualizar os passos ativos
+            document.querySelectorAll('.step').forEach(step => {
+                step.classList.remove('active');
+                if (parseInt(step.dataset.step) <= stepNumber) {
+                    step.classList.add('active');
+                }
+            });
+            
+            // Mostrar o conteúdo do passo atual
+            document.querySelectorAll('.step-content').forEach(content => {
+                content.classList.remove('active');
+            });
+            document.getElementById('step' + stepNumber).classList.add('active');
+        }
+        
+        // Função para voltar ao passo anterior na reserva
+        function prevStep(stepNumber) {
+            nextStep(stepNumber);
+        }
+        
+        // Função para redefinir os passos da reserva
+        function resetReservationSteps() {
+            nextStep(1);
+        }
+        
+        // Configurar eventos quando a página carregar
+        document.addEventListener('DOMContentLoaded', function() {
+            // Configurar o formulário de login
+            document.getElementById('loginForm').addEventListener('submit', function(e) {
+                e.preventDefault();
+                
+                // Simulação de login bem-sucedido
+                const email = document.getElementById('email').value;
+                const userName = email.split('@')[0];
+                
+                // Atualizar informações do utilizador
+                document.getElementById('userName').textContent = userName;
+                document.getElementById('userAvatar').textContent = userName.charAt(0).toUpperCase();
+                document.getElementById('userInfo').style.display = 'flex';
+                
+                // Mostrar o menu principal
+                showPage('mainMenuPage');
+            });
+            
+            // Configurar os cartões de funcionalidades
+            document.querySelectorAll('.feature-card').forEach(card => {
+                card.addEventListener('click', function() {
+                    const pageId = this.dataset.page;
+                    showPage(pageId);
+                });
+            });
+            
+            // Configurar as opções de modalidade de refeição
+            document.querySelectorAll('.meal-option').forEach(option => {
+                option.addEventListener('click', function() {
+                    document.querySelectorAll('.meal-option').forEach(opt => {
+                        opt.classList.remove('selected');
+                    });
+                    this.classList.add('selected');
+                });
+            });
+            
+            // Configurar os métodos de pagamento
+            document.querySelectorAll('.payment-method input').forEach(input => {
+                input.addEventListener('change', function() {
+                    document.querySelectorAll('.payment-method').forEach(method => {
+                        method.classList.remove('selected');
+                    });
+                    this.parentElement.classList.add('selected');
+                });
+            });
+        });
+    </script>
+</body>
+</html>
