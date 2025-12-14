@@ -455,6 +455,41 @@ footer {
     margin-bottom: 18px;
 }
 
+/* Menu item / pratos */
+.menu-item {
+  background: white;
+  padding: 20px;
+  border-radius: 14px;
+  border: 1px solid var(--border);
+  margin-bottom: 30px;
+}
+
+.menu-content {
+  display: flex;
+  flex-direction: row-reverse; /* coloca o primeiro elemento à direita */
+  justify-content: space-between;
+  gap: 30px;
+  align-items: flex-start;
+  flex-wrap: wrap; /* permite várias imagens numa linha */
+}
+
+.menu-content ul {
+  flex: 1;
+  list-style: disc;
+  padding-left: 20px;
+}
+
+.pizza-image {
+  flex: 0 0 250px; /* largura fixa para as imagens em fila */
+  width: 250px;
+}
+
+.pizza-image img {
+  width: 100%;
+  border-radius: 12px;
+  object-fit: cover;
+}
+
 /* Responsividade */
 @media (max-width: 768px) {
     .container {
