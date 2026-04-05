@@ -24,7 +24,7 @@ body {
     min-height: 100vh;
 }
 
-/* ── AUTH OVERLAY ── */
+/* AUTH OVERLAY */
 #authOverlay {
     position: fixed;
     inset: 0;
@@ -158,7 +158,7 @@ body {
 
 .back-to-students:hover { color: var(--accent); }
 
-/* ── SIDEBAR ── */
+/* SIDEBAR */
 .sidebar {
     width: var(--sidebar-w);
     background: white;
@@ -269,7 +269,7 @@ body {
 
 .logout-btn:hover { border-color: var(--danger); color: var(--danger); }
 
-/* ── MAIN CONTENT ── */
+/* MAIN CONTENT */
 .main {
     margin-left: var(--sidebar-w);
     flex: 1;
@@ -302,11 +302,11 @@ body {
     flex: 1;
 }
 
-/* ── PAGES ── */
+/* PAGES */
 .page { display: none; }
 .page.active { display: block; }
 
-/* ── STATS CARDS ── */
+/* STATS CARDS */
 .stats-grid {
     display: grid;
     grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
@@ -347,7 +347,7 @@ body {
 .stat-card.blue .stat-value { color: var(--info); }
 .stat-card.orange .stat-value { color: var(--warning); }
 
-/* ── CHART AREA ── */
+/* CHART AREA */
 .chart-row {
     display: grid;
     grid-template-columns: 2fr 1fr;
@@ -472,7 +472,7 @@ body {
 
 .legend-pct { margin-left: auto; font-weight: 600; }
 
-/* ── TABLE ── */
+/* TABLE */
 .table-wrap { overflow-x: auto; }
 
 table {
@@ -514,7 +514,7 @@ tbody tr:hover td { background: var(--bg); }
 .badge-red { background: #fee2e2; color: var(--danger); }
 .badge-blue { background: #dbeafe; color: var(--info); }
 
-/* ── MENU MANAGEMENT ── */
+/* MENU MANAGEMENT */
 .section-header {
     display: flex;
     align-items: center;
@@ -610,7 +610,7 @@ tbody tr:hover td { background: var(--bg); }
 .cat-sobremesa { background: #fef9c3; color: #92400e; }
 .cat-snack { background: #d1fae5; color: #065f46; }
 
-/* ── MODAL ── */
+/* MODAL */
 .modal-overlay {
     display: none;
     position: fixed;
@@ -646,7 +646,7 @@ tbody tr:hover td { background: var(--bg); }
     margin-top: 24px;
 }
 
-/* ── FILTERS & SEARCH ── */
+/* FILTERS & SEARCH */
 .filters {
     display: flex;
     gap: 10px;
@@ -694,7 +694,7 @@ tbody tr:hover td { background: var(--bg); }
     color: var(--text);
 }
 
-/* ── EMPTY STATE ── */
+/* EMPTY STATE */
 .empty-state {
     text-align: center;
     padding: 60px 20px;
@@ -704,7 +704,7 @@ tbody tr:hover td { background: var(--bg); }
 .empty-state .icon { font-size: 3rem; margin-bottom: 12px; }
 .empty-state p { font-size: 0.95rem; }
 
-/* ── RESPONSIVE ── */
+/* RESPONSIVE */
 @media (max-width: 768px) {
     .sidebar { transform: translateX(-100%); }
     .main { margin-left: 0; }
