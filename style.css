@@ -121,6 +121,8 @@ header {
     border: none;
     text-align: center;
     transition: background-color 0.3s, transform 0.2s;
+    font-family: inherit;
+    font-size: 1rem;
 }
 
 .btn:hover {
@@ -234,16 +236,14 @@ header {
     box-shadow: 0 5px 15px rgba(0,0,0,0.1);
 }
 
-/* Container da imagem */
 .restaurant-image {
     height: 180px;
     width: 100%;
     overflow: hidden;
     position: relative;
-    background-color: #f5f5f5; /* Cor de fundo enquanto a imagem carrega */
+    background-color: #f5f5f5;
 }
 
-/* A imagem em si */
 .restaurant-image img {
     width: 100%;
     height: 100%;
@@ -252,7 +252,6 @@ header {
     display: block;
     transition: transform 0.3s ease;
 }
-
 
 .restaurant-info {
     padding: 18px;
@@ -440,7 +439,7 @@ footer {
     border-top: 1px solid var(--border);
 }
 
-/* Estilos para seções */
+/* Secções */
 .section {
     padding: 36px 0;
 }
@@ -457,37 +456,127 @@ footer {
 
 /* Menu item / pratos */
 .menu-item {
-  background: white;
-  padding: 20px;
-  border-radius: 14px;
-  border: 1px solid var(--border);
-  margin-bottom: 30px;
+    background: white;
+    padding: 20px;
+    border-radius: 14px;
+    border: 1px solid var(--border);
+    margin-bottom: 30px;
 }
 
 .menu-content {
-  display: flex;
-  flex-direction: row-reverse; /* coloca o primeiro elemento à direita */
-  justify-content: space-between;
-  gap: 30px;
-  align-items: flex-start;
-  flex-wrap: wrap; /* permite várias imagens numa linha */
+    display: flex;
+    flex-direction: row-reverse;
+    justify-content: space-between;
+    gap: 30px;
+    align-items: flex-start;
+    flex-wrap: wrap;
 }
 
 .menu-content ul {
-  flex: 1;
-  list-style: disc;
-  padding-left: 20px;
+    flex: 1;
+    list-style: disc;
+    padding-left: 20px;
 }
 
 .pizza-image {
-  flex: 0 0 250px; /* largura fixa para as imagens em fila */
-  width: 250px;
+    flex: 0 0 250px;
+    width: 250px;
 }
 
 .pizza-image img {
-  width: 100%;
-  border-radius: 12px;
-  object-fit: cover;
+    width: 100%;
+    border-radius: 12px;
+    object-fit: cover;
+}
+
+/* ════════════════════════════════
+   index.css — estilos novos (auth tabs, sign up, link restaurante)
+════════════════════════════════ */
+
+/* Auth tabs */
+.auth-tabs {
+    display: flex;
+    background: #f5f5f5;
+    border-radius: 10px;
+    padding: 4px;
+    margin-bottom: 24px;
+}
+
+.auth-tab {
+    flex: 1;
+    text-align: center;
+    padding: 8px;
+    border-radius: 7px;
+    cursor: pointer;
+    font-weight: 600;
+    font-size: 0.9rem;
+    color: #6b6b6b;
+    transition: all 0.2s;
+    border: none;
+    background: none;
+    font-family: inherit;
+}
+
+.auth-tab.active {
+    background: white;
+    color: #048045;
+    box-shadow: 0 1px 4px rgba(0, 0, 0, 0.1);
+}
+
+.auth-form {
+    display: none;
+}
+
+.auth-form.active {
+    display: block;
+}
+
+/* Botão área de restaurantes */
+.restaurant-link {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    margin-top: 20px;
+    padding: 10px 16px;
+    border-radius: 8px;
+    border: 1.5px solid #eee;
+    background: white;
+    color: #6b6b6b;
+    font-size: 0.85rem;
+    font-weight: 600;
+    text-decoration: none;
+    transition: all 0.2s;
+    font-family: inherit;
+    cursor: pointer;
+    width: 100%;
+}
+
+.restaurant-link:hover {
+    border-color: #048045;
+    color: #048045;
+    background: rgba(4, 128, 69, 0.04);
+}
+
+.restaurant-link .icon {
+    font-size: 1rem;
+}
+
+.divider {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin: 18px 0;
+    color: #aaa;
+    font-size: 0.8rem;
+}
+
+.divider::before,
+.divider::after {
+    content: '';
+    flex: 1;
+    height: 1px;
+    background: #eee;
 }
 
 /* Responsividade */
@@ -495,23 +584,23 @@ footer {
     .container {
         padding: 0 18px;
     }
-    
+
     header {
         padding: 15px 18px;
     }
-    
+
     .features-grid {
         grid-template-columns: 1fr;
     }
-    
+
     .restaurants-grid {
         grid-template-columns: 1fr;
     }
-    
+
     .meal-options {
         flex-direction: column;
     }
-    
+
     .reservation-container {
         padding: 20px;
     }
@@ -521,15 +610,15 @@ footer {
     .logo {
         font-size: 1.2rem;
     }
-    
+
     .login-container {
         padding: 20px;
     }
-    
+
     .welcome-section h1 {
         font-size: 1.5rem;
     }
-    
+
     .section h2 {
         font-size: 1.3rem;
     }

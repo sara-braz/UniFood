@@ -5,7 +5,6 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>UniFood - Sistema de Restauração ISCTE</title>
     <link rel="stylesheet" href="style.css">
-    <script src="script.js"></script>
 </head>
 <body>
     <!-- Header -->
@@ -19,25 +18,72 @@
         </div>
     </header>
 
-    <!-- Página de Login -->
+    <!-- Página de Login / Registo -->
     <section id="loginPage" class="page active">
         <div class="container">
             <div class="login-container">
-                <h2>Login</h2>
-                <form id="loginForm">
-                    <div class="form-group">
-                        <label for="email">Email Institucional</label>
-                        <input type="email" id="email" placeholder="exemplo@iscte-iul.pt" required>
-                    </div>
-                    <div class="form-group">
-                        <label for="password">Palavra-passe</label>
-                        <input type="password" id="password" required>
-                    </div>
-                    <button type="submit" class="btn btn-primary">Entrar</button>
-                </form>
-                <p class="login-register">
-                    Ainda não tem conta? <a href="#" class="register-link">Registe-se aqui</a>
-                </p>
+                <h2>UniFood</h2>
+
+                <!-- Tabs Login / Registo -->
+                <div class="auth-tabs">
+                    <button class="auth-tab active" onclick="switchTab('login')">Entrar</button>
+                    <button class="auth-tab" onclick="switchTab('signup')">Registar</button>
+                </div>
+
+                <!-- FORM LOGIN -->
+                <div id="loginForm" class="auth-form active">
+                    <form onsubmit="doLogin(event)">
+                        <div class="form-group">
+                            <label for="email">Email Institucional</label>
+                            <input type="email" id="email" placeholder="exemplo@iscte-iul.pt" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="password">Palavra-passe</label>
+                            <input type="password" id="password" required>
+                        </div>
+                        <button type="submit" class="btn btn-primary">Entrar</button>
+                    </form>
+                    <p class="login-register" style="margin-top:12px">
+                        Ainda não tem conta? <a href="#" class="register-link" onclick="switchTab('signup')">Registe-se aqui</a>
+                    </p>
+                </div>
+
+                <!-- FORM REGISTO -->
+                <div id="signupForm" class="auth-form">
+                    <form onsubmit="doSignup(event)">
+                        <div class="form-group">
+                            <label for="signupName">Nome completo</label>
+                            <input type="text" id="signupName" placeholder="Ex: João Silva" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="signupEmail">Email Institucional</label>
+                            <input type="email" id="signupEmail" placeholder="exemplo@iscte-iul.pt" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="signupNumber">Número de Estudante</label>
+                            <input type="text" id="signupNumber" placeholder="Ex: 12345" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="signupPassword">Palavra-passe</label>
+                            <input type="password" id="signupPassword" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="signupConfirm">Confirmar palavra-passe</label>
+                            <input type="password" id="signupConfirm" required>
+                        </div>
+                        <button type="submit" class="btn btn-primary">Criar conta</button>
+                    </form>
+                    <p class="login-register" style="margin-top:12px">
+                        Já tem conta? <a href="#" class="register-link" onclick="switchTab('login')">Entrar</a>
+                    </p>
+                </div>
+
+                <!-- Divider + link restaurantes -->
+                <div class="divider">ou</div>
+                <a href="restaurant.html" class="restaurant-link">
+                    <span class="icon">🍽️</span>
+                    Área de Restaurantes
+                </a>
             </div>
         </div>
     </section>
@@ -49,36 +95,30 @@
                 <h1>Bem-vindo ao UniFood</h1>
                 <p>Sistema de Restauração para a Comunidade ISCTE</p>
             </div>
-            
             <div class="features-grid">
                 <div class="feature-card" data-page="restaurantsPage">
                     <div class="feature-icon">🍽️</div>
                     <h3>Consultar Restaurantes</h3>
                     <p>Veja todos os restaurantes e cafés disponíveis</p>
                 </div>
-                
                 <div class="feature-card" data-page="menusPage">
                     <div class="feature-icon">📋</div>
                     <h3>Visualizar Menus</h3>
                     <p>Consulte os menus de cada estabelecimento</p>
                 </div>
-                
                 <div class="feature-card" data-page="reservationPage">
                     <div class="feature-icon">📅</div>
                     <h3>Reservar Refeição</h3>
                     <p>Faça a sua reserva através do sistema de senhas</p>
                 </div>
-                
                 <div class="feature-card" data-page="paymentPage">
                     <div class="feature-icon">💳</div>
                     <h3>Pagamento Online</h3>
                     <p>Efetue pagamentos de forma rápida e segura</p>
-                </div>                
+                </div>
             </div>
         </div>
     </section>
-    
-    
 
     <!-- Página de Restaurantes -->
     <section id="restaurantsPage" class="page">
@@ -86,102 +126,80 @@
             <div class="section">
                 <h2>Restaurantes e Cafés Disponíveis</h2>
                 <p>Selecione um estabelecimento para ver mais informações</p>
-                
                 <div class="restaurants-grid">
-                    <!-- Pastelaria Monserrate Confeitaria -->
                     <div class="restaurant-card">
                         <div class="restaurant-image">
                             <img src="https://raw.githubusercontent.com/sara-braz/UniFood/refs/heads/site-final/imagens/Pastelaria_Monserrate.jpeg" alt="Pastelaria Monserrate Confeitaria">
                         </div>
                         <div class="restaurant-info">
                             <h3>Pastelaria Monserrate Confeitaria</h3>
-                            <p class="restaurant-detail">Horário: <br>
-                                Segunda a Sexta: 7h30 - 19h00 <br>
-                                Sábado e Domingo: 8h00 - 19h00</p>
+                            <p class="restaurant-detail">Horário:<br>Segunda a Sexta: 7h30 - 19h00<br>Sábado e Domingo: 8h00 - 19h00</p>
                             <p class="restaurant-detail">Localização: Av. Heliodoro Salgado 4, 2710-561 Sintra</p>
                             <button class="btn btn-primary reserve-btn" onclick="showReservationPage()">Fazer Reserva</button>
                             <button class="btn btn-primary reserve-btn" onclick="showMenuPage()">Menu</button>
                         </div>
                     </div>
-                    
-                    <!-- Tulipa de Sintra -->
                     <div class="restaurant-card">
                         <div class="restaurant-image">
                             <img src="https://raw.githubusercontent.com/sara-braz/UniFood/refs/heads/site-final/imagens/Tulipa.jpeg" alt="Tulipa de Sintra">
                         </div>
                         <div class="restaurant-info">
                             <h3>Tulipa de Sintra</h3>
-                            <p class="restaurant-detail">Horário: <br>
-                                Segunda a Sábado: 7h00 - 18h00</p>
+                            <p class="restaurant-detail">Horário:<br>Segunda a Sábado: 7h00 - 18h00</p>
                             <p class="restaurant-detail">Localização: Av. Heliodoro Salgado 53, 2710-575 Sintra</p>
                             <button class="btn btn-primary reserve-btn" onclick="showReservationPage()">Fazer Reserva</button>
                             <button class="btn btn-primary reserve-btn" onclick="showMenuPage()">Menu</button>
                         </div>
                     </div>
-                    
-                    <!-- Caralhinho -->
                     <div class="restaurant-card">
                         <div class="restaurant-image">
                             <img src="https://raw.githubusercontent.com/sara-braz/UniFood/refs/heads/site-final/imagens/caralhinho.jpeg" alt="Caralhinho">
                         </div>
                         <div class="restaurant-info">
                             <h3>O Caralhinho Bar & Restaurante</h3>
-                            <p class="restaurant-detail">Horário: <br>
-                                Terça a Sábado: 12h30 - 15h30 e 19h00 - 22h00</p>
+                            <p class="restaurant-detail">Horário:<br>Terça a Sábado: 12h30 - 15h30 e 19h00 - 22h00</p>
                             <p class="restaurant-detail">Localização: Mercado Municipal da Estefânia, Sintra, Portugal 2710-605</p>
                             <button class="btn btn-primary reserve-btn" onclick="showReservationPage()">Fazer Reserva</button>
                             <button class="btn btn-primary reserve-btn" onclick="showMenuPage()">Menu</button>
                         </div>
                     </div>
-
-                    <!-- Pizaria do Mercado -->
                     <div class="restaurant-card">
                         <div class="restaurant-image">
                             <img src="https://raw.githubusercontent.com/sara-braz/UniFood/refs/heads/site-final/imagens/Pizaria_Mercado.jpeg" alt="Pizaria do Mercado">
                         </div>
                         <div class="restaurant-info">
                             <h3>Pizaria do Mercado</h3>
-                            <p class="restaurant-detail">Horário: <br>
-                                Terça a Sábado: 10h30 - 15h00 e 19h00 - 22h00</p>
+                            <p class="restaurant-detail">Horário:<br>Terça a Sábado: 10h30 - 15h00 e 19h00 - 22h00</p>
                             <p class="restaurant-detail">Localização: Mercado Municipal da Estefânia Loja 15, Sintra, Portugal 2710-605</p>
                             <button class="btn btn-primary reserve-btn" onclick="showReservationPage()">Fazer Reserva</button>
                             <button class="btn btn-primary reserve-btn" onclick="showMenuPage()">Menu</button>
                         </div>
                     </div>
-
-                    <!-- Monkys -->
                     <div class="restaurant-card">
                         <div class="restaurant-image">
                             <img src="https://raw.githubusercontent.com/sara-braz/UniFood/refs/heads/site-final/imagens/Monkys.jpeg" alt="Monkys">
                         </div>
                         <div class="restaurant-info">
                             <h3>Monkys</h3>
-                            <p class="restaurant-detail">Horário: <br>
-                                Terças: 11h00 - 14h00 <br>
-                                Quartas: 11h00 - 15h00 <br>
-                                Quinta a Sábado: 11h00 - 22h00</p>
+                            <p class="restaurant-detail">Horário:<br>Terças: 11h00 - 14h00<br>Quartas: 11h00 - 15h00<br>Quinta a Sábado: 11h00 - 22h00</p>
                             <p class="restaurant-detail">Localização: Mercado da Estefânia, R. Cap. Mário Alberto Soares Pimentel, 2710-589 Sintra</p>
                             <button class="btn btn-primary reserve-btn" onclick="showReservationPage()">Fazer Reserva</button>
                             <button class="btn btn-primary reserve-btn" onclick="showMenuPage()">Menu</button>
                         </div>
                     </div>
-                    
-                    <!-- O Melhor Croissant da Minha Rua rua -->
                     <div class="restaurant-card">
                         <div class="restaurant-image">
-                            <img src="https://raw.githubusercontent.com/sara-braz/UniFood/refs/heads/site-final/imagens/OMCDMR.jpeg" alt="O Melhor Croissant da Minha Rua rua">
+                            <img src="https://raw.githubusercontent.com/sara-braz/UniFood/refs/heads/site-final/imagens/OMCDMR.jpeg" alt="O Melhor Croissant da Minha Rua">
                         </div>
                         <div class="restaurant-info">
-                            <h3>O Melhor Croissant da Minha Rua rua</h3>
-                            <p class="restaurant-detail">Horário: <br>  
-                                Segunda a Domingo: 08h30 - 19h00</p>
+                            <h3>O Melhor Croissant da Minha Rua</h3>
+                            <p class="restaurant-detail">Horário:<br>Segunda a Domingo: 08h30 - 19h00</p>
                             <p class="restaurant-detail">Localização: Mercado da Estefânia, R. Cap. Mário Alberto Soares Pimentel, 2710-589 Sintra</p>
                             <button class="btn btn-primary reserve-btn" onclick="showReservationPage()">Fazer Reserva</button>
                             <button class="btn btn-primary reserve-btn" onclick="showMenuPage()">Menu</button>
                         </div>
                     </div>
                 </div>
-                
                 <button class="btn btn-ghost back-btn" onclick="showPage('mainMenuPage')">Voltar ao Menu Principal</button>
             </div>
         </div>
@@ -192,10 +210,8 @@
         <div class="container">
             <div class="menu-container">
                 <h2>Menus Disponíveis</h2>
-            
                 <div class="menu-item">
                     <h3>Menu Pizaria do Mercado</h3>
-
                     <div class="menu-content">
                         <ul>
                             <li>Fatia de Pizza: €3.50</li>
@@ -203,7 +219,6 @@
                             <li>2 Fatias de Pizza: €6.50</li>
                             <li>2 Fatias de Pizza c/ Bebida: €7.50</li>
                         </ul>
-
                         <div class="pizza-image">
                             <img src="https://raw.githubusercontent.com/sara-braz/UniFood/refs/heads/site-final/imagens/PM_Menu.jpeg" alt="Menu Pizaria do Mercado">
                             <img src="https://raw.githubusercontent.com/sara-braz/UniFood/refs/heads/site-final/imagens/PM_Menu1.jpeg" alt="Menu Pizaria do Mercado">
@@ -215,17 +230,11 @@
         </div>
     </section>
 
-    <!-- TMR -->
-
-
-
-
     <!-- Página de Reserva -->
     <section id="reservationPage" class="page">
         <div class="container">
             <div class="reservation-container">
                 <h2>Reserva de Refeição</h2>
-                
                 <div class="reservation-steps">
                     <div class="step active" data-step="1">
                         <div class="step-number">1</div>
@@ -240,8 +249,6 @@
                         <div class="step-label">Confirmação</div>
                     </div>
                 </div>
-                
-                <!-- Passo 1: Escolha da modalidade -->
                 <div id="step1" class="step-content active">
                     <h3>Escolha a modalidade da refeição</h3>
                     <div class="meal-options">
@@ -254,14 +261,11 @@
                             <p>Desfrute da sua refeição no local</p>
                         </div>
                     </div>
-                    
                     <div class="navigation">
                         <button class="btn btn-ghost" onclick="showPage('mainMenuPage')">Cancelar</button>
                         <button class="btn btn-primary" onclick="nextStep(2)">Continuar</button>
                     </div>
                 </div>
-                
-                <!-- Passo 2: Pagamento -->
                 <div id="step2" class="step-content">
                     <h3>Método de Pagamento</h3>
                     <div class="payment-methods">
@@ -269,26 +273,21 @@
                             <input type="radio" name="payment" value="card" checked>
                             Cartão de Crédito/Débito
                         </label>
-                        
                         <label class="payment-method">
                             <input type="radio" name="payment" value="multibanco">
                             Multibanco
                         </label>
                     </div>
-                    
                     <div class="navigation">
                         <button class="btn btn-ghost" onclick="prevStep(1)">Voltar</button>
                         <button class="btn btn-primary" onclick="nextStep(3)">Pagar</button>
                     </div>
                 </div>
-                
-                <!-- Passo 3: Confirmação -->
                 <div id="step3" class="step-content">
                     <h3>Reserva Confirmada!</h3>
                     <p>A sua reserva foi efetuada com sucesso.</p>
                     <p>Número da senha: <strong>#A5B2C9</strong></p>
                     <p>Apresente esta senha no estabelecimento para levantar a sua refeição.</p>
-                    
                     <div class="navigation">
                         <button class="btn btn-primary" onclick="showPage('mainMenuPage')">Voltar ao Menu Principal</button>
                     </div>
@@ -312,102 +311,6 @@
         © UniFood — Projeto ISCTE‑Sintra • Desenvolvido por Grupo A3
     </footer>
 
-    <script>
-        // Função para mostrar uma página específica
-        function showPage(pageId) {
-            // Esconder todas as páginas
-            document.querySelectorAll('.page').forEach(page => {
-                page.classList.remove('active');
-            });
-            
-            // Mostrar a página solicitada
-            document.getElementById(pageId).classList.add('active');
-        }
-        
-        // Função para mostrar a página de reserva
-        function showReservationPage() {
-            showPage('reservationPage');
-            resetReservationSteps();
-        }
-
-        function showMenuPage() {
-            showPage('menusPage');
-        }
-        
-        // Função para avançar para o próximo passo na reserva
-        function nextStep(stepNumber) {
-            // Atualizar os passos ativos
-            document.querySelectorAll('.step').forEach(step => {
-                step.classList.remove('active');
-                if (parseInt(step.dataset.step) <= stepNumber) {
-                    step.classList.add('active');
-                }
-            });
-            
-            // Mostrar o conteúdo do passo atual
-            document.querySelectorAll('.step-content').forEach(content => {
-                content.classList.remove('active');
-            });
-            document.getElementById('step' + stepNumber).classList.add('active');
-        }
-        
-        // Função para voltar ao passo anterior na reserva
-        function prevStep(stepNumber) {
-            nextStep(stepNumber);
-        }
-        
-        // Função para redefinir os passos da reserva
-        function resetReservationSteps() {
-            nextStep(1);
-        }
-        
-        // Configurar eventos quando a página carregar
-        document.addEventListener('DOMContentLoaded', function() {
-            // Configurar o formulário de login
-            document.getElementById('loginForm').addEventListener('submit', function(e) {
-                e.preventDefault();
-                
-                // Simulação de login bem-sucedido
-                const email = document.getElementById('email').value;
-                const userName = email.split('@')[0];
-                
-                // Atualizar informações do utilizador
-                document.getElementById('userName').textContent = userName;
-                document.getElementById('userAvatar').textContent = userName.charAt(0).toUpperCase();
-                document.getElementById('userInfo').style.display = 'flex';
-                
-                // Mostrar o menu principal
-                showPage('mainMenuPage');
-            });
-            
-            // Configurar os cartões de funcionalidades
-            document.querySelectorAll('.feature-card').forEach(card => {
-                card.addEventListener('click', function() {
-                    const pageId = this.dataset.page;
-                    showPage(pageId);
-                });
-            });
-            
-            // Configurar as opções de modalidade de refeição
-            document.querySelectorAll('.meal-option').forEach(option => {
-                option.addEventListener('click', function() {
-                    document.querySelectorAll('.meal-option').forEach(opt => {
-                        opt.classList.remove('selected');
-                    });
-                    this.classList.add('selected');
-                });
-            });
-            
-            // Configurar os métodos de pagamento
-            document.querySelectorAll('.payment-method input').forEach(input => {
-                input.addEventListener('change', function() {
-                    document.querySelectorAll('.payment-method').forEach(method => {
-                        method.classList.remove('selected');
-                    });
-                    this.parentElement.classList.add('selected');
-                });
-            });
-        });
-    </script>
+    <script src="index.js"></script>
 </body>
 </html>
