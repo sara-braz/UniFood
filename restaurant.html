@@ -1,0 +1,279 @@
+<!DOCTYPE html>
+<html lang="pt">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>UniFood — Painel do Restaurante</title>
+    <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600;700&family=DM+Serif+Display&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="restaurant.css">
+</head>
+<body>
+
+<!-- ───── AUTH OVERLAY ───── -->
+<div id="authOverlay">
+    <div class="auth-box">
+        <div class="auth-logo">UniFood</div>
+        <div class="auth-subtitle">Área de Restaurantes</div>
+
+        <div class="auth-tabs">
+            <div class="auth-tab active" onclick="switchAuthTab('login')">Entrar</div>
+            <div class="auth-tab" onclick="switchAuthTab('signup')">Registar</div>
+        </div>
+
+        <!-- Login -->
+        <div id="loginForm" class="auth-form active">
+            <form onsubmit="doLogin(event)">
+                <div class="form-group">
+                    <label>Email</label>
+                    <input type="email" id="loginEmail" placeholder="restaurante@email.com" required>
+                </div>
+                <div class="form-group">
+                    <label>Palavra-passe</label>
+                    <input type="password" id="loginPassword" placeholder="••••••••" required>
+                </div>
+                <button type="submit" class="btn-full">Entrar no Painel</button>
+            </form>
+            <div class="auth-switch">Não tem conta? <a onclick="switchAuthTab('signup')" style="cursor:pointer">Registar restaurante</a></div>
+        </div>
+
+        <!-- Sign Up -->
+        <div id="signupForm" class="auth-form">
+            <form onsubmit="doSignup(event)">
+                <div class="form-group">
+                    <label>Nome do Restaurante</label>
+                    <input type="text" id="signupName" placeholder="Ex: Cantina Central" required>
+                </div>
+                <div class="form-group">
+                    <label>Email</label>
+                    <input type="email" id="signupEmail" placeholder="restaurante@email.com" required>
+                </div>
+                <div class="form-group">
+                    <label>Localização</label>
+                    <input type="text" id="signupLocation" placeholder="Ex: Edifício A, Piso 0">
+                </div>
+                <div class="form-group">
+                    <label>Horário</label>
+                    <input type="text" id="signupHours" placeholder="Ex: Seg-Sex 08h00-20h00">
+                </div>
+                <div class="form-group">
+                    <label>Palavra-passe</label>
+                    <input type="password" id="signupPassword" placeholder="••••••••" required>
+                </div>
+                <button type="submit" class="btn-full">Criar Conta</button>
+            </form>
+            <div class="auth-switch">Já tem conta? <a onclick="switchAuthTab('login')" style="cursor:pointer">Entrar</a></div>
+        </div>
+
+        <a href="index.html" class="back-to-students">← Ir para a área de estudantes</a>
+    </div>
+</div>
+
+<!-- ───── SIDEBAR ───── -->
+<aside class="sidebar">
+    <div class="sidebar-logo">
+        <span class="brand">UniFood</span>
+        <span class="role-badge">Painel do Restaurante</span>
+    </div>
+    <nav class="sidebar-nav">
+        <div class="nav-item active" onclick="showTab('statsPage', this)">
+            <span class="nav-icon">📊</span> Estatísticas
+        </div>
+        <div class="nav-item" onclick="showTab('reservationsPage', this)">
+            <span class="nav-icon">📅</span> Reservas
+        </div>
+        <div class="nav-item" onclick="showTab('menuPage', this)">
+            <span class="nav-icon">🍽️</span> Gerir Menu
+        </div>
+    </nav>
+    <div class="sidebar-footer">
+        <div class="restaurant-info-mini">
+            <div class="avatar" id="sidebarAvatar">R</div>
+            <div class="avatar-info">
+                <div class="name" id="sidebarName">Restaurante</div>
+                <div class="role">Restaurante</div>
+            </div>
+        </div>
+        <button class="logout-btn" onclick="doLogout()">Terminar sessão</button>
+    </div>
+</aside>
+
+<!-- ───── MAIN ───── -->
+<div class="main">
+    <div class="topbar">
+        <h1 id="topbarTitle">Estatísticas</h1>
+        <span class="topbar-meta" id="topbarDate"></span>
+    </div>
+
+    <div class="content">
+
+        <!-- STATS PAGE -->
+        <div id="statsPage" class="page active">
+            <div class="stats-grid">
+                <div class="stat-card green">
+                    <div class="stat-icon">🎫</div>
+                    <div class="stat-value" id="statTotal">0</div>
+                    <div class="stat-label">Reservas totais</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-icon">☀️</div>
+                    <div class="stat-value" id="statToday">0</div>
+                    <div class="stat-label">Hoje</div>
+                </div>
+                <div class="stat-card blue">
+                    <div class="stat-icon">✅</div>
+                    <div class="stat-value" id="statConfirmed">0</div>
+                    <div class="stat-label">Confirmadas</div>
+                </div>
+                <div class="stat-card orange">
+                    <div class="stat-icon">⏳</div>
+                    <div class="stat-value" id="statPending">0</div>
+                    <div class="stat-label">Pendentes</div>
+                </div>
+                <div class="stat-card green">
+                    <div class="stat-icon">🍽️</div>
+                    <div class="stat-value" id="statItems">0</div>
+                    <div class="stat-label">Itens no menu</div>
+                </div>
+            </div>
+
+            <div class="chart-row">
+                <div class="card">
+                    <div class="card-header">
+                        <span class="card-title">Reservas — Últimos 7 dias</span>
+                        <span class="card-badge">Esta semana</span>
+                    </div>
+                    <div class="bar-chart" id="barChart"></div>
+                </div>
+                <div class="card">
+                    <div class="card-header">
+                        <span class="card-title">Modalidade</span>
+                    </div>
+                    <div class="donut-wrap">
+                        <div class="donut"></div>
+                        <div class="donut-legend">
+                            <div class="legend-item">
+                                <div class="legend-dot" style="background:var(--accent)"></div>
+                                Take-away
+                                <span class="legend-pct">60%</span>
+                            </div>
+                            <div class="legend-item">
+                                <div class="legend-dot" style="background:#93c5a8"></div>
+                                No local
+                                <span class="legend-pct">25%</span>
+                            </div>
+                            <div class="legend-item">
+                                <div class="legend-dot" style="background:#d1fae5"></div>
+                                Outros
+                                <span class="legend-pct">15%</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="card">
+                <div class="card-header">
+                    <span class="card-title">Itens mais reservados</span>
+                </div>
+                <div class="table-wrap">
+                    <table id="topItemsTable">
+                        <thead>
+                            <tr>
+                                <th>#</th>
+                                <th>Item</th>
+                                <th>Categoria</th>
+                                <th>Reservas</th>
+                            </tr>
+                        </thead>
+                        <tbody id="topItemsBody"></tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <!-- RESERVATIONS PAGE -->
+        <div id="reservationsPage" class="page">
+            <div class="filters" id="statusFilters">
+                <button class="filter-btn active" onclick="filterReservations('all', this)">Todas</button>
+                <button class="filter-btn" onclick="filterReservations('pending', this)">Pendentes</button>
+                <button class="filter-btn" onclick="filterReservations('confirmed', this)">Confirmadas</button>
+                <button class="filter-btn" onclick="filterReservations('collected', this)">Levantadas</button>
+            </div>
+            <div class="search-bar">
+                <span>🔍</span>
+                <input type="text" id="searchInput" placeholder="Pesquisar por nome ou senha…" oninput="renderReservations()">
+            </div>
+            <div class="card">
+                <div class="table-wrap">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Senha</th>
+                                <th>Estudante</th>
+                                <th>Item</th>
+                                <th>Modalidade</th>
+                                <th>Hora</th>
+                                <th>Estado</th>
+                                <th>Ação</th>
+                            </tr>
+                        </thead>
+                        <tbody id="reservationsBody"></tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <!-- MENU PAGE -->
+        <div id="menuPage" class="page">
+            <div class="section-header">
+                <span class="section-title">Itens do Menu</span>
+                <button class="btn btn-primary" onclick="openMenuModal()">+ Adicionar item</button>
+            </div>
+            <div class="filters">
+                <button class="filter-btn active" onclick="filterMenu('all', this)">Todos</button>
+                <button class="filter-btn" onclick="filterMenu('prato', this)">Pratos</button>
+                <button class="filter-btn" onclick="filterMenu('bebida', this)">Bebidas</button>
+                <button class="filter-btn" onclick="filterMenu('sobremesa', this)">Sobremesas</button>
+                <button class="filter-btn" onclick="filterMenu('snack', this)">Snacks</button>
+            </div>
+            <div class="menu-grid" id="menuGrid"></div>
+        </div>
+
+    </div>
+</div>
+
+<!-- ───── MENU MODAL ───── -->
+<div class="modal-overlay" id="menuModal">
+    <div class="modal">
+        <h2 id="modalTitle">Adicionar item ao menu</h2>
+        <div class="form-group">
+            <label>Nome do item</label>
+            <input type="text" id="itemName" placeholder="Ex: Prato do dia">
+        </div>
+        <div class="form-group">
+            <label>Descrição</label>
+            <input type="text" id="itemDesc" placeholder="Ex: Arroz, carne e salada">
+        </div>
+        <div class="form-group">
+            <label>Preço (€)</label>
+            <input type="number" id="itemPrice" placeholder="0.00" step="0.01" min="0">
+        </div>
+        <div class="form-group">
+            <label>Categoria</label>
+            <select id="itemCategory">
+                <option value="prato">Prato</option>
+                <option value="bebida">Bebida</option>
+                <option value="sobremesa">Sobremesa</option>
+                <option value="snack">Snack</option>
+            </select>
+        </div>
+        <div class="modal-footer">
+            <button class="btn btn-ghost" onclick="closeMenuModal()">Cancelar</button>
+            <button class="btn btn-primary" onclick="saveMenuItem()">Guardar</button>
+        </div>
+    </div>
+</div>
+
+<script src="restaurant.js"></script>
+</body>
+</html>
