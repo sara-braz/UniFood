@@ -704,6 +704,22 @@ tbody tr:hover td { background: var(--bg); }
 .empty-state .icon { font-size: 3rem; margin-bottom: 12px; }
 .empty-state p { font-size: 0.95rem; }
 
+/* INLINE ERROR MESSAGES */
+.error-msg {
+    display: none;
+    color: #dc2626;
+    font-size: 0.85rem;
+    margin-bottom: 10px;
+    padding: 8px 12px;
+    background: #fee2e2;
+    border-radius: 7px;
+    border: 1px solid #fecaca;
+}
+
+.error-msg.visible {
+    display: block;
+}
+
 /* RESPONSIVE */
 @media (max-width: 768px) {
     .sidebar { transform: translateX(-100%); }

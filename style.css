@@ -579,6 +579,101 @@ footer {
     background: #eee;
 }
 
+/* Dropdown utilizador + erros inline */
+
+/* Clickable logo */
+.logo {
+    cursor: pointer;
+    user-select: none;
+}
+
+/* User dropdown trigger */
+.user-info {
+    position: relative;
+}
+
+.user-info-btn {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    cursor: pointer;
+    background: none;
+    border: none;
+    font-family: inherit;
+    font-size: 1rem;
+    color: #222;
+    padding: 4px 8px;
+    border-radius: 8px;
+    transition: background 0.15s;
+}
+
+.user-info-btn:hover {
+    background: #f0f0f0;
+}
+
+/* Dropdown panel */
+.user-dropdown {
+    display: none;
+    position: absolute;
+    top: calc(100% + 8px);
+    right: 0;
+    background: white;
+    border: 1px solid #eee;
+    border-radius: 10px;
+    box-shadow: 0 6px 20px rgba(0,0,0,0.1);
+    min-width: 160px;
+    z-index: 200;
+    overflow: hidden;
+}
+
+.user-dropdown.open {
+    display: block;
+}
+
+.dropdown-item {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 11px 16px;
+    font-size: 0.9rem;
+    cursor: pointer;
+    color: #333;
+    transition: background 0.15s;
+    border: none;
+    background: none;
+    width: 100%;
+    font-family: inherit;
+    text-align: left;
+}
+
+.dropdown-item:hover {
+    background: #f5f5f5;
+}
+
+.dropdown-item.danger {
+    color: #dc2626;
+}
+
+.dropdown-item.danger:hover {
+    background: #fee2e2;
+}
+
+/* Inline error messages */
+.error-msg {
+    display: none;
+    color: #dc2626;
+    font-size: 0.85rem;
+    margin-top: 10px;
+    padding: 8px 12px;
+    background: #fee2e2;
+    border-radius: 7px;
+    border: 1px solid #fecaca;
+}
+
+.error-msg.visible {
+    display: block;
+}
+
 /* Responsividade */
 @media (max-width: 768px) {
     .container {
