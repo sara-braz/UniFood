@@ -1,15 +1,8 @@
-// STATE
+ // STATE 
 let currentRestaurant = null;
 let editingItemId = null;
 let activeReservationFilter = 'all';
 let activeMenuFilter = 'all';
-
-const DEMO_RESTAURANT = {
-    id: 1,
-    name: 'Pizaria do Mercado',
-    email: 'pizaria@unifood.pt',
-    password: '1234'
-};
 
 let menuItems = [
     { id: 1, name: 'Fatia de Pizza', desc: 'Uma fatia de pizza à escolha', price: 3.50, category: 'prato' },
@@ -32,7 +25,7 @@ let reservations = [
 const weekDays = ['Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sáb', 'Dom'];
 const weekData = [14, 22, 18, 27, 31, 8, 0];
 
-// AUTH
+ // AUTH 
 function switchAuthTab(tab) {
     document.querySelectorAll('.auth-tab').forEach((t, i) => {
         t.classList.toggle('active', (i === 0 && tab === 'login') || (i === 1 && tab === 'signup'));
@@ -41,12 +34,34 @@ function switchAuthTab(tab) {
     document.getElementById('signupForm').classList.toggle('active', tab === 'signup');
 }
 
+ // Erro inline 
+function showRestaurantError(id, msg) {
+    const el = document.getElementById(id);
+    el.textContent = msg;
+    el.classList.add('visible');
+}
+
+function clearRestaurantError(id) {
+    const el = document.getElementById(id);
+    el.textContent = '';
+    el.classList.remove('visible');
+}
+
 function doLogin(event) {
     event.preventDefault();
+    clearRestaurantError('loginError');
 
     const email = document.getElementById('loginEmail').value.trim();
-    const pass = document.getElementById('loginPassword').value;
+    const pass  = document.getElementById('loginPassword').value;
 
+    // 1. Credenciais estáticas (config.js)
+    const staticUser = DEMO_RESTAURANTS.find(u => u.email === email && u.password === pass);
+    if (staticUser) {
+        loginSuccess({ name: staticUser.name, email });
+        return;
+    }
+
+    // 2. Backend
     fetch('http://172.16.0.36:3000/login', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -57,15 +72,12 @@ function doLogin(event) {
         if (data.success) {
             loginSuccess(data.restaurant || { name: email.split('@')[0], email });
         } else {
-            demoLogin(email);
+            showRestaurantError('loginError', data.message || 'Email ou palavra-passe incorretos.');
         }
     })
-    .catch(() => demoLogin(email));
-}
-
-function demoLogin(email) {
-    const name = email === DEMO_RESTAURANT.email ? DEMO_RESTAURANT.name : email.split('@')[0];
-    loginSuccess({ name, email });
+    .catch(() => {
+        showRestaurantError('loginError', 'Email ou palavra-passe incorretos.');
+    });
 }
 
 function loginSuccess(restaurant) {
@@ -78,14 +90,13 @@ function loginSuccess(restaurant) {
 
 function doSignup(event) {
     event.preventDefault();
+    clearRestaurantError('signupError');
 
-    const name = document.getElementById('signupName').value.trim();
-    const email = document.getElementById('signupEmail').value.trim();
+    const name     = document.getElementById('signupName').value.trim();
+    const email    = document.getElementById('signupEmail').value.trim();
     const location = document.getElementById('signupLocation').value.trim();
-    const hours = document.getElementById('signupHours').value.trim();
+    const hours    = document.getElementById('signupHours').value.trim();
     const password = document.getElementById('signupPassword').value;
-
-    if (!name || !email || !password) { alert('Preencha pelo menos nome, email e palavra-passe.'); return; }
 
     fetch('http://172.16.0.36:3000/signup', {
         method: 'POST',
@@ -98,12 +109,11 @@ function doSignup(event) {
             alert('Conta criada com sucesso! Pode entrar agora.');
             switchAuthTab('login');
         } else {
-            alert(data.message || 'Erro ao criar conta. Tente novamente.');
+            showRestaurantError('signupError', data.message || 'Erro ao criar conta. Tente novamente.');
         }
     })
     .catch(() => {
-        alert('Conta criada (modo demo). A entrar…');
-        loginSuccess({ name, email });
+        showRestaurantError('signupError', 'Sem ligação ao servidor. O registo requer conexão ao backend.');
     });
 }
 
@@ -112,7 +122,7 @@ function doLogout() {
     document.getElementById('authOverlay').style.display = 'flex';
 }
 
-// NAV
+ // NAV 
 function showTab(pageId, navEl) {
     document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
     document.getElementById(pageId).classList.add('active');
@@ -123,7 +133,7 @@ function showTab(pageId, navEl) {
     document.getElementById('topbarTitle').textContent = titles[pageId] || '';
 }
 
-// INIT
+ // INIT 
 function initDashboard() {
     updateStats();
     renderBarChart();
@@ -175,7 +185,7 @@ function renderTopItems() {
     }).join('');
 }
 
-// RESERVATIONS
+ // RESERVATIONS 
 function filterReservations(status, btn) {
     activeReservationFilter = status;
     document.querySelectorAll('#statusFilters .filter-btn').forEach(b => b.classList.remove('active'));
@@ -223,7 +233,7 @@ function markCollected(id) {
     if (r) { r.status = 'collected'; renderReservations(); updateStats(); }
 }
 
-// MENU
+ // MENU 
 function filterMenu(cat, btn) {
     activeMenuFilter = cat;
     document.querySelectorAll('.filters .filter-btn').forEach(b => b.classList.remove('active'));
@@ -307,7 +317,7 @@ function deleteMenuItem(id) {
     updateStats();
 }
 
-// SET DATE ON LOAD
+ // SET DATE ON LOAD 
 document.getElementById('topbarDate').textContent = new Date().toLocaleDateString('pt-PT', {
     weekday: 'long', day: 'numeric', month: 'long'
 });

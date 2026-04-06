@@ -31,6 +31,7 @@
                     <label>Palavra-passe</label>
                     <input type="password" id="loginPassword" placeholder="••••••••" required>
                 </div>
+                <div id="loginError" class="error-msg"></div>
                 <button type="submit" class="btn-full">Entrar no Painel</button>
             </form>
             <div class="auth-switch">Não tem conta? <a onclick="switchAuthTab('signup')" style="cursor:pointer">Registar restaurante</a></div>
@@ -59,6 +60,7 @@
                     <label>Palavra-passe</label>
                     <input type="password" id="signupPassword" placeholder="••••••••" required>
                 </div>
+                <div id="signupError" class="error-msg"></div>
                 <button type="submit" class="btn-full">Criar Conta</button>
             </form>
             <div class="auth-switch">Já tem conta? <a onclick="switchAuthTab('login')" style="cursor:pointer">Entrar</a></div>
@@ -199,10 +201,12 @@
                 <button class="filter-btn" onclick="filterReservations('confirmed', this)">Confirmadas</button>
                 <button class="filter-btn" onclick="filterReservations('collected', this)">Levantadas</button>
             </div>
+
             <div class="search-bar">
                 <span>🔍</span>
                 <input type="text" id="searchInput" placeholder="Pesquisar por nome ou senha…" oninput="renderReservations()">
             </div>
+
             <div class="card">
                 <div class="table-wrap">
                     <table>
@@ -229,6 +233,7 @@
                 <span class="section-title">Itens do Menu</span>
                 <button class="btn btn-primary" onclick="openMenuModal()">+ Adicionar item</button>
             </div>
+
             <div class="filters">
                 <button class="filter-btn active" onclick="filterMenu('all', this)">Todos</button>
                 <button class="filter-btn" onclick="filterMenu('prato', this)">Pratos</button>
@@ -236,6 +241,7 @@
                 <button class="filter-btn" onclick="filterMenu('sobremesa', this)">Sobremesas</button>
                 <button class="filter-btn" onclick="filterMenu('snack', this)">Snacks</button>
             </div>
+
             <div class="menu-grid" id="menuGrid"></div>
         </div>
 
@@ -274,6 +280,7 @@
     </div>
 </div>
 
+<script src="config.js"></script>
 <script src="restaurant.js"></script>
 </body>
 </html>

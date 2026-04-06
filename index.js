@@ -1,4 +1,4 @@
-// Auth tab switch
+ // Auth tab switch 
 function switchTab(tab) {
     document.querySelectorAll('.auth-tab').forEach((t, i) => {
         t.classList.toggle('active', (i === 0 && tab === 'login') || (i === 1 && tab === 'signup'));
@@ -7,13 +7,35 @@ function switchTab(tab) {
     document.getElementById('signupForm').classList.toggle('active', tab === 'signup');
 }
 
-// Login
+ // Erro inline 
+function showError(id, msg) {
+    const el = document.getElementById(id);
+    el.textContent = msg;
+    el.classList.add('visible');
+}
+
+function clearError(id) {
+    const el = document.getElementById(id);
+    el.textContent = '';
+    el.classList.remove('visible');
+}
+
+ // Login 
 function doLogin(event) {
     event.preventDefault();
+    clearError('loginError');
 
     const email    = document.getElementById('email').value.trim();
     const password = document.getElementById('password').value;
 
+    // 1. Credenciais estáticas (config.js)
+    const staticUser = DEMO_USERS.find(u => u.email === email && u.password === password);
+    if (staticUser) {
+        loginSuccess(staticUser.name);
+        return;
+    }
+
+    // 2. Backend
     fetch('http://172.16.0.36:3000/login', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -21,23 +43,25 @@ function doLogin(event) {
     })
     .then(r => r.json())
     .then(data => {
-        if (data.success) loginSuccess(email);
-        else alert(data.message || 'Credenciais incorretas.');
+        if (data.success) loginSuccess(data.name || email.split('@')[0]);
+        else showError('loginError', data.message || 'Email ou palavra-passe incorretos.');
     })
-    .catch(() => loginSuccess(email)); // demo fallback
+    .catch(() => {
+        showError('loginError', 'Email ou palavra-passe incorretos.');
+    });
 }
 
-function loginSuccess(email) {
-    const userName = email.split('@')[0];
-    document.getElementById('userName').textContent = userName;
-    document.getElementById('userAvatar').textContent = userName.charAt(0).toUpperCase();
+function loginSuccess(name) {
+    document.getElementById('userName').textContent = name;
+    document.getElementById('userAvatar').textContent = name.charAt(0).toUpperCase();
     document.getElementById('userInfo').style.display = 'flex';
     showPage('mainMenuPage');
 }
 
-// Sign Up
+ // Sign Up 
 function doSignup(event) {
     event.preventDefault();
+    clearError('signupError');
 
     const name     = document.getElementById('signupName').value.trim();
     const email    = document.getElementById('signupEmail').value.trim();
@@ -46,7 +70,7 @@ function doSignup(event) {
     const confirm  = document.getElementById('signupConfirm').value;
 
     if (password !== confirm) {
-        alert('As palavras-passe não coincidem.');
+        showError('signupError', 'As palavras-passe não coincidem.');
         return;
     }
 
@@ -61,16 +85,48 @@ function doSignup(event) {
             alert('Conta criada com sucesso! Pode entrar agora.');
             switchTab('login');
         } else {
-            alert(data.message || 'Erro ao criar conta.');
+            showError('signupError', data.message || 'Erro ao criar conta.');
         }
     })
     .catch(() => {
-        alert('Conta criada (modo demo). A entrar…');
-        loginSuccess(email);
+        showError('signupError', 'Sem ligação ao servidor. O registo requer conexão ao backend.');
     });
 }
 
-// Navegação
+ // Logo → home 
+function goHome() {
+    // Só navega para o menu se já estiver autenticado
+    const userInfo = document.getElementById('userInfo');
+    if (userInfo.style.display !== 'none' && userInfo.style.display !== '') {
+        showPage('mainMenuPage');
+    }
+}
+
+ // Dropdown do utilizador 
+function toggleDropdown() {
+    document.getElementById('userDropdown').classList.toggle('open');
+}
+
+function doLogout() {
+    document.getElementById('userInfo').style.display = 'none';
+    document.getElementById('userDropdown').classList.remove('open');
+    // Limpar campos de login
+    document.getElementById('email').value = '';
+    document.getElementById('password').value = '';
+    clearError('loginError');
+    switchTab('login');
+    showPage('loginPage');
+}
+
+// Fechar dropdown ao clicar fora
+document.addEventListener('click', function (e) {
+    const userInfo = document.getElementById('userInfo');
+    if (!userInfo.contains(e.target)) {
+        document.getElementById('userDropdown').classList.remove('open');
+    }
+});
+
+ // Navegação 
 function showPage(pageId) {
     document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
     document.getElementById(pageId).classList.add('active');

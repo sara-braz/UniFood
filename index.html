@@ -10,11 +10,18 @@
     <!-- Header -->
     <header>
         <div class="logo-area">
-            <div class="logo">UniFood</div>
+            <div class="logo" onclick="goHome()">UniFood</div>
         </div>
         <div class="user-info" id="userInfo" style="display: none;">
-            <div class="user-avatar" id="userAvatar">EU</div>
-            <span id="userName">Estudante</span>
+            <button class="user-info-btn" onclick="toggleDropdown()">
+                <div class="user-avatar" id="userAvatar">EU</div>
+                <span id="userName">Estudante</span>
+            </button>
+            <div class="user-dropdown" id="userDropdown">
+                <button class="dropdown-item danger" onclick="doLogout()">
+                    🚪 Terminar sessão
+                </button>
+            </div>
         </div>
     </header>
 
@@ -24,7 +31,6 @@
             <div class="login-container">
                 <h2>UniFood</h2>
 
-                <!-- Tabs Login / Registo -->
                 <div class="auth-tabs">
                     <button class="auth-tab active" onclick="switchTab('login')">Entrar</button>
                     <button class="auth-tab" onclick="switchTab('signup')">Registar</button>
@@ -41,7 +47,8 @@
                             <label for="password">Palavra-passe</label>
                             <input type="password" id="password" required>
                         </div>
-                        <button type="submit" class="btn btn-primary">Entrar</button>
+                        <div class="error-msg" id="loginError"></div>
+                        <button type="submit" class="btn btn-primary" style="margin-top:8px">Entrar</button>
                     </form>
                     <p class="login-register" style="margin-top:12px">
                         Ainda não tem conta? <a href="#" class="register-link" onclick="switchTab('signup')">Registe-se aqui</a>
@@ -71,14 +78,14 @@
                             <label for="signupConfirm">Confirmar palavra-passe</label>
                             <input type="password" id="signupConfirm" required>
                         </div>
-                        <button type="submit" class="btn btn-primary">Criar conta</button>
+                        <div class="error-msg" id="signupError"></div>
+                        <button type="submit" class="btn btn-primary" style="margin-top:8px">Criar conta</button>
                     </form>
                     <p class="login-register" style="margin-top:12px">
                         Já tem conta? <a href="#" class="register-link" onclick="switchTab('login')">Entrar</a>
                     </p>
                 </div>
 
-                <!-- Divider + link restaurantes -->
                 <div class="divider">ou</div>
                 <a href="restaurant.html" class="restaurant-link">
                     <span class="icon">🍽️</span>
@@ -306,11 +313,11 @@
         </div>
     </section>
 
-    <!-- Footer -->
     <footer>
         © UniFood — Projeto ISCTE‑Sintra • Desenvolvido por Grupo A3
     </footer>
 
+    <script src="config.js"></script>
     <script src="index.js"></script>
 </body>
 </html>
