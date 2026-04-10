@@ -62,7 +62,7 @@ function doLogin(event) {
     }
 
     // 2. Backend
-    fetch('http://172.16.0.36:3000/login', {
+    fetch(`${API_URL}/login`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ email, password: pass, role: 'restaurant' })
@@ -98,7 +98,7 @@ function doSignup(event) {
     const hours    = document.getElementById('signupHours').value.trim();
     const password = document.getElementById('signupPassword').value;
 
-    fetch('http://172.16.0.36:3000/signup', {
+    fetch(`${API_URL}/signup`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ name, email, password, location, hours, role: 'restaurant' })

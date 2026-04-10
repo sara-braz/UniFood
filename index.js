@@ -36,7 +36,7 @@ function doLogin(event) {
     }
 
     // 2. Backend
-    fetch('http://172.16.0.36:3000/login', {
+    fetch(`${API_URL}/login`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ email, password, role: 'student' })
@@ -74,7 +74,7 @@ function doSignup(event) {
         return;
     }
 
-    fetch('http://172.16.0.36:3000/signup', {
+    fetch(`${API_URL}/signup`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ name, email, password, student_number: number, role: 'student' })
