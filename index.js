@@ -1,4 +1,4 @@
- // Auth tab switch 
+// Auth tab switch
 function switchTab(tab) {
     document.querySelectorAll('.auth-tab').forEach((t, i) => {
         t.classList.toggle('active', (i === 0 && tab === 'login') || (i === 1 && tab === 'signup'));
@@ -7,7 +7,7 @@ function switchTab(tab) {
     document.getElementById('signupForm').classList.toggle('active', tab === 'signup');
 }
 
- // Erro inline 
+// Erro inline
 function showError(id, msg) {
     const el = document.getElementById(id);
     el.textContent = msg;
@@ -20,7 +20,7 @@ function clearError(id) {
     el.classList.remove('visible');
 }
 
- // Login 
+// Login
 function doLogin(event) {
     event.preventDefault();
     clearError('loginError');
@@ -58,7 +58,7 @@ function loginSuccess(name) {
     showPage('mainMenuPage');
 }
 
- // Sign Up 
+// Sign Up
 function doSignup(event) {
     event.preventDefault();
     clearError('signupError');
@@ -93,7 +93,7 @@ function doSignup(event) {
     });
 }
 
- // Logo → home 
+// Logo → home
 function goHome() {
     // Só navega para o menu se já estiver autenticado
     const userInfo = document.getElementById('userInfo');
@@ -102,7 +102,7 @@ function goHome() {
     }
 }
 
- // Dropdown do utilizador 
+// Dropdown do utilizador
 function toggleDropdown() {
     document.getElementById('userDropdown').classList.toggle('open');
 }
@@ -126,7 +126,7 @@ document.addEventListener('click', function (e) {
     }
 });
 
- // Navegação 
+// Navegação
 function showPage(pageId) {
     document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
     document.getElementById(pageId).classList.add('active');

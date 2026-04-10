@@ -1,4 +1,4 @@
- // STATE 
+// STATE
 let currentRestaurant = null;
 let editingItemId = null;
 let activeReservationFilter = 'all';
@@ -25,7 +25,7 @@ let reservations = [
 const weekDays = ['Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sáb', 'Dom'];
 const weekData = [14, 22, 18, 27, 31, 8, 0];
 
- // AUTH 
+// AUTH
 function switchAuthTab(tab) {
     document.querySelectorAll('.auth-tab').forEach((t, i) => {
         t.classList.toggle('active', (i === 0 && tab === 'login') || (i === 1 && tab === 'signup'));
@@ -34,7 +34,7 @@ function switchAuthTab(tab) {
     document.getElementById('signupForm').classList.toggle('active', tab === 'signup');
 }
 
- // Erro inline 
+// Erro inline
 function showRestaurantError(id, msg) {
     const el = document.getElementById(id);
     el.textContent = msg;
@@ -122,7 +122,7 @@ function doLogout() {
     document.getElementById('authOverlay').style.display = 'flex';
 }
 
- // NAV 
+// NAV
 function showTab(pageId, navEl) {
     document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
     document.getElementById(pageId).classList.add('active');
@@ -133,7 +133,7 @@ function showTab(pageId, navEl) {
     document.getElementById('topbarTitle').textContent = titles[pageId] || '';
 }
 
- // INIT 
+// INIT
 function initDashboard() {
     updateStats();
     renderBarChart();
@@ -185,7 +185,7 @@ function renderTopItems() {
     }).join('');
 }
 
- // RESERVATIONS 
+// RESERVATIONS
 function filterReservations(status, btn) {
     activeReservationFilter = status;
     document.querySelectorAll('#statusFilters .filter-btn').forEach(b => b.classList.remove('active'));
@@ -233,7 +233,7 @@ function markCollected(id) {
     if (r) { r.status = 'collected'; renderReservations(); updateStats(); }
 }
 
- // MENU 
+// MENU
 function filterMenu(cat, btn) {
     activeMenuFilter = cat;
     document.querySelectorAll('.filters .filter-btn').forEach(b => b.classList.remove('active'));
@@ -317,7 +317,7 @@ function deleteMenuItem(id) {
     updateStats();
 }
 
- // SET DATE ON LOAD 
+// SET DATE ON LOAD
 document.getElementById('topbarDate').textContent = new Date().toLocaleDateString('pt-PT', {
     weekday: 'long', day: 'numeric', month: 'long'
 });
