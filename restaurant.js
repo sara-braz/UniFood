@@ -1,31 +1,13 @@
 // STATE
-let currentRestaurant = null;
+let currentRestaurant = null;  // { id, nome_comercial, user_id, ... }
 let editingItemId = null;
 let activeReservationFilter = 'all';
-let activeMenuFilter = 'all';
-
-let menuItems = [
-    { id: 1, name: 'Fatia de Pizza', desc: 'Uma fatia de pizza à escolha', price: 3.50, category: 'prato' },
-    { id: 2, name: 'Fatia c/ Bebida', desc: 'Fatia de pizza com refrigerante ou água', price: 4.50, category: 'prato' },
-    { id: 3, name: '2 Fatias de Pizza', desc: 'Duas fatias à escolha', price: 6.50, category: 'prato' },
-    { id: 4, name: '2 Fatias c/ Bebida', desc: 'Duas fatias com bebida incluída', price: 7.50, category: 'prato' },
-    { id: 5, name: 'Água 0.5L', desc: 'Água mineral natural', price: 1.00, category: 'bebida' },
-    { id: 6, name: 'Refrigerante', desc: 'Coca-Cola, Fanta ou Sprite', price: 1.50, category: 'bebida' },
-];
-
-let reservations = [
-    { id: '#A5B2C9', student: 'joão.silva', item: 'Fatia de Pizza', mode: 'Take-away', time: '12:05', status: 'confirmed' },
-    { id: '#B1D3E7', student: 'maria.costa', item: '2 Fatias c/ Bebida', mode: 'No local', time: '12:12', status: 'pending' },
-    { id: '#C9F1A2', student: 'pedro.lopes', item: 'Fatia c/ Bebida', mode: 'Take-away', time: '12:18', status: 'collected' },
-    { id: '#D7E2B4', student: 'ana.ferreira', item: '2 Fatias de Pizza', mode: 'Take-away', time: '12:31', status: 'pending' },
-    { id: '#E4A6C1', student: 'tiago.neves', item: 'Fatia de Pizza', mode: 'No local', time: '12:45', status: 'confirmed' },
-    { id: '#F2B8D9', student: 'ines.rodrigues', item: 'Fatia c/ Bebida', mode: 'Take-away', time: '13:02', status: 'pending' },
-];
+let menuItems = [];
+let reservations = [];
 
 const weekDays = ['Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sáb', 'Dom'];
-const weekData = [14, 22, 18, 27, 31, 8, 0];
 
-// AUTH
+// AUTH TABS
 function switchAuthTab(tab) {
     document.querySelectorAll('.auth-tab').forEach((t, i) => {
         t.classList.toggle('active', (i === 0 && tab === 'login') || (i === 1 && tab === 'signup'));
@@ -34,30 +16,32 @@ function switchAuthTab(tab) {
     document.getElementById('signupForm').classList.toggle('active', tab === 'signup');
 }
 
-// Erro inline
-function showRestaurantError(id, msg) {
+// ERRO INLINE
+function showError(id, msg) {
     const el = document.getElementById(id);
     el.textContent = msg;
     el.classList.add('visible');
 }
 
-function clearRestaurantError(id) {
+function clearError(id) {
     const el = document.getElementById(id);
     el.textContent = '';
     el.classList.remove('visible');
 }
 
+// LOGIN
 function doLogin(event) {
     event.preventDefault();
-    clearRestaurantError('loginError');
+    clearError('loginError');
 
     const email = document.getElementById('loginEmail').value.trim();
     const pass  = document.getElementById('loginPassword').value;
 
-    // 1. Credenciais estáticas (config.js)
+    // 1. Credenciais estáticas (config.js — fallback offline)
     const staticUser = DEMO_RESTAURANTS.find(u => u.email === email && u.password === pass);
     if (staticUser) {
-        loginSuccess({ name: staticUser.name, email });
+        // Login offline: não temos restaurant_id real, usamos dados do config
+        loginSuccess({ nome_comercial: staticUser.name, email, id: null });
         return;
     }
 
@@ -69,28 +53,39 @@ function doLogin(event) {
     })
     .then(r => r.json())
     .then(data => {
-        if (data.success) {
-            loginSuccess(data.restaurant || { name: email.split('@')[0], email });
-        } else {
-            showRestaurantError('loginError', data.message || 'Email ou palavra-passe incorretos.');
+        if (!data.success) {
+            showError('loginError', data.message || 'Email ou palavra-passe incorretos.');
+            return;
         }
+        const user = data.user;
+        // Buscar o restaurante associado ao user_id
+        return fetch(`${API_URL}/restaurants/user/${user.id}`)
+            .then(r => r.json())
+            .then(rData => {
+                if (!rData.success) {
+                    showError('loginError', 'Utilizador não tem restaurante associado.');
+                    return;
+                }
+                loginSuccess(rData.restaurant);
+            });
     })
     .catch(() => {
-        showRestaurantError('loginError', 'Email ou palavra-passe incorretos.');
+        showError('loginError', 'Sem ligação ao servidor.');
     });
 }
 
 function loginSuccess(restaurant) {
     currentRestaurant = restaurant;
     document.getElementById('authOverlay').style.display = 'none';
-    document.getElementById('sidebarName').textContent = restaurant.name;
-    document.getElementById('sidebarAvatar').textContent = restaurant.name.charAt(0).toUpperCase();
+    document.getElementById('sidebarName').textContent = restaurant.nome_comercial;
+    document.getElementById('sidebarAvatar').textContent = restaurant.nome_comercial.charAt(0).toUpperCase();
     initDashboard();
 }
 
+// SIGNUP
 function doSignup(event) {
     event.preventDefault();
-    clearRestaurantError('signupError');
+    clearError('signupError');
 
     const name     = document.getElementById('signupName').value.trim();
     const email    = document.getElementById('signupEmail').value.trim();
@@ -109,16 +104,18 @@ function doSignup(event) {
             alert('Conta criada com sucesso! Pode entrar agora.');
             switchAuthTab('login');
         } else {
-            showRestaurantError('signupError', data.message || 'Erro ao criar conta. Tente novamente.');
+            showError('signupError', data.message || 'Erro ao criar conta.');
         }
     })
     .catch(() => {
-        showRestaurantError('signupError', 'Sem ligação ao servidor. O registo requer conexão ao backend.');
+        showError('signupError', 'Sem ligação ao servidor.');
     });
 }
 
 function doLogout() {
     currentRestaurant = null;
+    menuItems = [];
+    reservations = [];
     document.getElementById('authOverlay').style.display = 'flex';
 }
 
@@ -128,37 +125,101 @@ function showTab(pageId, navEl) {
     document.getElementById(pageId).classList.add('active');
     document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
     if (navEl) navEl.classList.add('active');
-
     const titles = { statsPage: 'Estatísticas', reservationsPage: 'Reservas', menuPage: 'Gerir Menu' };
     document.getElementById('topbarTitle').textContent = titles[pageId] || '';
 }
 
-// INIT
-function initDashboard() {
-    updateStats();
-    renderBarChart();
-    renderTopItems();
-    renderReservations();
-    renderMenu();
+// INIT DASHBOARD
+async function initDashboard() {
     document.getElementById('topbarDate').textContent = new Date().toLocaleDateString('pt-PT', {
         weekday: 'long', day: 'numeric', month: 'long'
     });
+
+    await Promise.all([
+        loadMenu(),
+        loadReservations()
+    ]);
+
+    renderBarChart();
+    updateStats();
+    renderTopItems();
 }
 
+// CARREGAR DADOS DA API
+async function loadMenu() {
+    if (!currentRestaurant.id) {
+        // modo offline — mantém array vazio
+        renderMenu();
+        return;
+    }
+    try {
+        const res = await fetch(`${API_URL}/menu/${currentRestaurant.id}`);
+        const data = await res.json();
+        // Normalizar campos da BD para os nomes usados no frontend
+        menuItems = data.map(m => ({
+            id: m.id,
+            name: m.nome_menu,
+            desc: m.descricao || '',
+            price: parseFloat(m.preco),
+            category: 'prato'  // BD não tem categoria ainda — padrão prato
+        }));
+    } catch {
+        menuItems = [];
+    }
+    renderMenu();
+}
+
+async function loadReservations() {
+    if (!currentRestaurant.id) {
+        renderReservations();
+        return;
+    }
+    try {
+        const res = await fetch(`${API_URL}/reservations/restaurant/${currentRestaurant.id}`);
+        const data = await res.json();
+        // Normalizar campos da BD para os nomes usados no frontend
+        reservations = data.map(r => ({
+            id: r.id,
+            qr: r.qr_token,
+            student: r.student_name || r.student_email || '—',
+            item: r.nome_menu || '—',
+            time: new Date(r.created_at).toLocaleTimeString('pt-PT', { hour: '2-digit', minute: '2-digit' }),
+            status: r.status
+        }));
+    } catch {
+        reservations = [];
+    }
+    renderReservations();
+}
+
+// ESTATÍSTICAS
 function updateStats() {
-    document.getElementById('statTotal').textContent = reservations.length + 120;
-    document.getElementById('statToday').textContent = reservations.length;
+    document.getElementById('statTotal').textContent = reservations.length;
+    document.getElementById('statToday').textContent = reservations.filter(r => {
+        // contar só reservas de hoje
+        return true; // simplificado — BD não guarda hora separada
+    }).length;
     document.getElementById('statConfirmed').textContent = reservations.filter(r => r.status === 'confirmed').length;
     document.getElementById('statPending').textContent = reservations.filter(r => r.status === 'pending').length;
     document.getElementById('statItems').textContent = menuItems.length;
 }
 
 function renderBarChart() {
-    const max = Math.max(...weekData);
+    // Agrupar reservas por dia da semana
+    const counts = [0, 0, 0, 0, 0, 0, 0];
+    reservations.forEach(r => {
+        // usa índice 0=Dom..6=Sab, ajusta para Seg=0
+        const day = new Date(r.created_at || Date.now()).getDay();
+        const idx = (day + 6) % 7;
+        counts[idx]++;
+    });
+    const max = Math.max(...counts, 1);
     const container = document.getElementById('barChart');
-    container.innerHTML = weekData.map((v, i) => `
+    container.innerHTML = counts.map((v, i) => `
         <div class="bar-wrap">
-            <div class="bar ${i === 4 ? 'today' : ''}" style="height:${max ? (v / max) * 100 : 0}%" title="${v} reservas"></div>
+            <div class="bar ${i === new Date().getDay() ? 'today' : ''}"
+                 style="height:${(v / max) * 100}%"
+                 title="${v} reservas"></div>
             <div class="bar-label">${weekDays[i]}</div>
         </div>
     `).join('');
@@ -166,26 +227,24 @@ function renderBarChart() {
 
 function renderTopItems() {
     const counts = {};
-    reservations.forEach(r => { counts[r.item] = (counts[r.item] || 0) + 1; });
-    menuItems.forEach(m => { if (!counts[m.name]) counts[m.name] = Math.floor(Math.random() * 20 + 5); });
+    reservations.forEach(r => {
+        if (r.item && r.item !== '—') counts[r.item] = (counts[r.item] || 0) + 1;
+    });
 
     const sorted = Object.entries(counts).sort((a, b) => b[1] - a[1]).slice(0, 5);
-    const catMap = {};
-    menuItems.forEach(m => catMap[m.name] = m.category);
 
-    document.getElementById('topItemsBody').innerHTML = sorted.map(([name, count], i) => {
-        const cat = catMap[name] || 'prato';
-        const catLabel = { prato: 'Prato', bebida: 'Bebida', sobremesa: 'Sobremesa', snack: 'Snack' }[cat];
-        return `<tr>
-            <td><strong>${i + 1}</strong></td>
-            <td>${name}</td>
-            <td><span class="badge badge-blue">${catLabel}</span></td>
-            <td><strong>${count}</strong></td>
-        </tr>`;
-    }).join('');
+    document.getElementById('topItemsBody').innerHTML = sorted.length
+        ? sorted.map(([name, count], i) => `
+            <tr>
+                <td><strong>${i + 1}</strong></td>
+                <td>${name}</td>
+                <td><span class="badge badge-blue">Prato</span></td>
+                <td><strong>${count}</strong></td>
+            </tr>`).join('')
+        : `<tr><td colspan="4" style="text-align:center;color:var(--muted);padding:20px">Sem dados ainda</td></tr>`;
 }
 
-// RESERVATIONS
+// RESERVAS
 function filterReservations(status, btn) {
     activeReservationFilter = status;
     document.querySelectorAll('#statusFilters .filter-btn').forEach(b => b.classList.remove('active'));
@@ -199,24 +258,26 @@ function renderReservations() {
 
     if (activeReservationFilter !== 'all') list = list.filter(r => r.status === activeReservationFilter);
     if (q) list = list.filter(r =>
-        r.student.includes(q) || r.id.toLowerCase().includes(q) || r.item.toLowerCase().includes(q)
+        r.student.toLowerCase().includes(q) ||
+        String(r.qr || '').toLowerCase().includes(q) ||
+        r.item.toLowerCase().includes(q)
     );
 
-    const statusBadge = { confirmed: 'badge-green', pending: 'badge-yellow', collected: 'badge-blue' };
-    const statusLabel = { confirmed: 'Confirmada', pending: 'Pendente', collected: 'Levantada' };
+    const statusBadge = { confirmed: 'badge-green', pending: 'badge-yellow', collected: 'badge-blue', cancelled: 'badge-red' };
+    const statusLabel = { confirmed: 'Confirmada', pending: 'Pendente', collected: 'Levantada', cancelled: 'Cancelada' };
 
     document.getElementById('reservationsBody').innerHTML = list.length
         ? list.map(r => `
             <tr>
-                <td><strong>${r.id}</strong></td>
+                <td><strong>${r.qr || r.id}</strong></td>
                 <td>${r.student}</td>
                 <td>${r.item}</td>
-                <td>${r.mode}</td>
+                <td>—</td>
                 <td>${r.time}</td>
-                <td><span class="badge ${statusBadge[r.status]}">${statusLabel[r.status]}</span></td>
+                <td><span class="badge ${statusBadge[r.status] || ''}">${statusLabel[r.status] || r.status}</span></td>
                 <td>
-                    ${r.status === 'pending' ? `<button class="btn btn-sm btn-primary" onclick="confirmReservation('${r.id}')">Confirmar</button>` : ''}
-                    ${r.status === 'confirmed' ? `<button class="btn btn-sm btn-ghost" onclick="markCollected('${r.id}')">Levantada</button>` : ''}
+                    ${r.status === 'pending' ? `<button class="btn btn-sm btn-primary" onclick="confirmReservation(${r.id})">Confirmar</button>` : ''}
+                    ${r.status === 'confirmed' ? `<button class="btn btn-sm btn-ghost" onclick="markCollected(${r.id})">Levantada</button>` : ''}
                 </td>
             </tr>
         `).join('')
@@ -224,27 +285,57 @@ function renderReservations() {
 }
 
 function confirmReservation(id) {
-    const r = reservations.find(x => x.id === id);
-    if (r) { r.status = 'confirmed'; renderReservations(); updateStats(); }
+    fetch(`${API_URL}/reservations/${id}/status`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ status: 'confirmed' })
+    })
+    .then(r => r.json())
+    .then(data => {
+        if (data.success) {
+            const r = reservations.find(x => x.id === id);
+            if (r) r.status = 'confirmed';
+            renderReservations();
+            updateStats();
+        }
+    })
+    .catch(() => {
+        // fallback offline
+        const r = reservations.find(x => x.id === id);
+        if (r) { r.status = 'confirmed'; renderReservations(); updateStats(); }
+    });
 }
 
 function markCollected(id) {
-    const r = reservations.find(x => x.id === id);
-    if (r) { r.status = 'collected'; renderReservations(); updateStats(); }
+    fetch(`${API_URL}/reservations/${id}/status`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ status: 'collected' })
+    })
+    .then(r => r.json())
+    .then(data => {
+        if (data.success) {
+            const r = reservations.find(x => x.id === id);
+            if (r) r.status = 'collected';
+            renderReservations();
+            updateStats();
+        }
+    })
+    .catch(() => {
+        const r = reservations.find(x => x.id === id);
+        if (r) { r.status = 'collected'; renderReservations(); updateStats(); }
+    });
 }
 
 // MENU
 function filterMenu(cat, btn) {
-    activeMenuFilter = cat;
     document.querySelectorAll('.filters .filter-btn').forEach(b => b.classList.remove('active'));
     if (btn) btn.classList.add('active');
-    renderMenu();
+    renderMenu(cat);
 }
 
-function renderMenu() {
-    const list = activeMenuFilter === 'all' ? menuItems : menuItems.filter(m => m.category === activeMenuFilter);
-    const catLabel = { prato: 'Prato', bebida: 'Bebida', sobremesa: 'Sobremesa', snack: 'Snack' };
-    const catClass = { prato: 'cat-prato', bebida: 'cat-bebida', sobremesa: 'cat-sobremesa', snack: 'cat-snack' };
+function renderMenu(cat = 'all') {
+    const list = cat === 'all' ? menuItems : menuItems.filter(m => m.category === cat);
 
     document.getElementById('menuGrid').innerHTML = list.length
         ? list.map(m => `
@@ -253,15 +344,14 @@ function renderMenu() {
                     <span class="menu-card-name">${m.name}</span>
                     <span class="menu-card-price">€${m.price.toFixed(2)}</span>
                 </div>
-                <span class="menu-category ${catClass[m.category]}">${catLabel[m.category]}</span>
-                <div class="menu-card-desc">${m.desc}</div>
+                <div class="menu-card-desc">${m.desc || '—'}</div>
                 <div class="menu-card-footer">
                     <button class="btn btn-sm btn-ghost" onclick="editMenuItem(${m.id})">✏️ Editar</button>
                     <button class="btn btn-sm btn-danger" onclick="deleteMenuItem(${m.id})">🗑️ Remover</button>
                 </div>
             </div>
         `).join('')
-        : `<div class="empty-state"><div class="icon">🍽️</div><p>Nenhum item nesta categoria</p></div>`;
+        : `<div class="empty-state"><div class="icon">🍽️</div><p>Nenhum item no menu</p></div>`;
 }
 
 function openMenuModal(id = null) {
@@ -272,12 +362,10 @@ function openMenuModal(id = null) {
         document.getElementById('itemName').value = item.name;
         document.getElementById('itemDesc').value = item.desc;
         document.getElementById('itemPrice').value = item.price;
-        document.getElementById('itemCategory').value = item.category;
     } else {
         document.getElementById('itemName').value = '';
         document.getElementById('itemDesc').value = '';
         document.getElementById('itemPrice').value = '';
-        document.getElementById('itemCategory').value = 'prato';
     }
     document.getElementById('menuModal').classList.add('open');
 }
@@ -288,33 +376,84 @@ function closeMenuModal() {
 }
 
 function saveMenuItem() {
-    const name = document.getElementById('itemName').value.trim();
-    const desc = document.getElementById('itemDesc').value.trim();
-    const price = parseFloat(document.getElementById('itemPrice').value);
-    const category = document.getElementById('itemCategory').value;
+    const nome_menu = document.getElementById('itemName').value.trim();
+    const descricao = document.getElementById('itemDesc').value.trim();
+    const preco     = parseFloat(document.getElementById('itemPrice').value);
 
-    if (!name || isNaN(price)) { alert('Preencha o nome e o preço.'); return; }
-
-    if (editingItemId) {
-        const item = menuItems.find(m => m.id === editingItemId);
-        Object.assign(item, { name, desc, price, category });
-    } else {
-        menuItems.push({ id: Date.now(), name, desc, price, category });
+    if (!nome_menu || isNaN(preco)) {
+        alert('Preencha o nome e o preço.');
+        return;
     }
 
-    closeMenuModal();
-    renderMenu();
-    updateStats();
-    renderTopItems();
+    if (editingItemId) {
+        // Editar
+        fetch(`${API_URL}/menu/${editingItemId}`, {
+            method: 'PUT',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ nome_menu, descricao, preco })
+        })
+        .then(r => r.json())
+        .then(data => {
+            if (data.success) {
+                const item = menuItems.find(m => m.id === editingItemId);
+                if (item) { item.name = nome_menu; item.desc = descricao; item.price = preco; }
+                closeMenuModal();
+                renderMenu();
+                updateStats();
+            }
+        })
+        .catch(() => {
+            // fallback offline
+            const item = menuItems.find(m => m.id === editingItemId);
+            if (item) { item.name = nome_menu; item.desc = descricao; item.price = preco; }
+            closeMenuModal(); renderMenu(); updateStats();
+        });
+    } else {
+        // Adicionar
+        fetch(`${API_URL}/menu`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ restaurant_id: currentRestaurant.id, nome_menu, descricao, preco })
+        })
+        .then(r => r.json())
+        .then(data => {
+            if (data.success) {
+                menuItems.push({
+                    id: data.item.id,
+                    name: data.item.nome_menu,
+                    desc: data.item.descricao || '',
+                    price: parseFloat(data.item.preco),
+                    category: 'prato'
+                });
+                closeMenuModal();
+                renderMenu();
+                updateStats();
+            }
+        })
+        .catch(() => {
+            menuItems.push({ id: Date.now(), name: nome_menu, desc: descricao, price: preco, category: 'prato' });
+            closeMenuModal(); renderMenu(); updateStats();
+        });
+    }
 }
 
 function editMenuItem(id) { openMenuModal(id); }
 
 function deleteMenuItem(id) {
     if (!confirm('Remover este item do menu?')) return;
-    menuItems = menuItems.filter(m => m.id !== id);
-    renderMenu();
-    updateStats();
+    fetch(`${API_URL}/menu/${id}`, { method: 'DELETE' })
+    .then(r => r.json())
+    .then(data => {
+        if (data.success) {
+            menuItems = menuItems.filter(m => m.id !== id);
+            renderMenu();
+            updateStats();
+        }
+    })
+    .catch(() => {
+        menuItems = menuItems.filter(m => m.id !== id);
+        renderMenu(); updateStats();
+    });
 }
 
 // SET DATE ON LOAD
