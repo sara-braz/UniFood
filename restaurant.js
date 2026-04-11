@@ -4,6 +4,7 @@ let editingItemId = null;
 let activeReservationFilter = 'all';
 let menuItems = [];
 let reservations = [];
+const API_URL = API;
 
 const weekDays = ['Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sáb', 'Dom'];
 
