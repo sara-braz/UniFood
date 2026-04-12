@@ -52,6 +52,7 @@ function doLogin(event) {
 }
 
 function loginSuccess(name) {
+    localStorage.setItem('unifood_student', name);
     document.getElementById('userName').textContent = name;
     document.getElementById('userAvatar').textContent = name.charAt(0).toUpperCase();
     document.getElementById('userInfo').style.display = 'flex';
@@ -108,9 +109,9 @@ function toggleDropdown() {
 }
 
 function doLogout() {
+    localStorage.removeItem('unifood_student');
     document.getElementById('userInfo').style.display = 'none';
     document.getElementById('userDropdown').classList.remove('open');
-    // Limpar campos de login
     document.getElementById('email').value = '';
     document.getElementById('password').value = '';
     clearError('loginError');
@@ -155,6 +156,12 @@ function prevStep(n) { nextStep(n); }
 function resetReservationSteps() { nextStep(1); }
 
 document.addEventListener('DOMContentLoaded', function () {
+    // Restaurar sessão
+    const savedName = localStorage.getItem('unifood_student');
+    if (savedName) {
+        loginSuccess(savedName);
+    }
+
     document.querySelectorAll('.feature-card').forEach(card => {
         card.addEventListener('click', function () {
             showPage(this.dataset.page);

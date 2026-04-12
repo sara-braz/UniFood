@@ -77,6 +77,7 @@ function doLogin(event) {
 
 function loginSuccess(restaurant) {
     currentRestaurant = restaurant;
+    localStorage.setItem('unifood_restaurant', JSON.stringify(restaurant));
     document.getElementById('authOverlay').style.display = 'none';
     document.getElementById('sidebarName').textContent = restaurant.nome_comercial;
     document.getElementById('sidebarAvatar').textContent = restaurant.nome_comercial.charAt(0).toUpperCase();
@@ -117,6 +118,7 @@ function doLogout() {
     currentRestaurant = null;
     menuItems = [];
     reservations = [];
+    localStorage.removeItem('unifood_restaurant');
     document.getElementById('authOverlay').style.display = 'flex';
 }
 
@@ -461,3 +463,17 @@ function deleteMenuItem(id) {
 document.getElementById('topbarDate').textContent = new Date().toLocaleDateString('pt-PT', {
     weekday: 'long', day: 'numeric', month: 'long'
 });
+
+// RESTAURAR SESSÃO
+(function restoreSession() {
+    const saved = localStorage.getItem('unifood_restaurant');
+    if (!saved) return;
+
+    try {
+        const restaurant = JSON.parse(saved);
+        if (!restaurant || !restaurant.nome_comercial) return;
+        loginSuccess(restaurant);
+    } catch {
+        localStorage.removeItem('unifood_restaurant');
+    }
+})();
