@@ -30,6 +30,18 @@ function clearError(id) {
     el.classList.remove('visible');
 }
 
+// Restaurantes locais (demo/offline)
+function getLocalRestaurants() {
+    try { return JSON.parse(localStorage.getItem('unifood_local_restaurants') || '[]'); }
+    catch { return []; }
+}
+
+function saveLocalRestaurant(r) {
+    const list = getLocalRestaurants();
+    list.push(r);
+    localStorage.setItem('unifood_local_restaurants', JSON.stringify(list));
+}
+
 // LOGIN
 function doLogin(event) {
     event.preventDefault();
@@ -41,12 +53,18 @@ function doLogin(event) {
     // 1. Credenciais estáticas (config.js — fallback offline)
     const staticUser = DEMO_RESTAURANTS.find(u => u.email === email && u.password === pass);
     if (staticUser) {
-        // Login offline: não temos restaurant_id real, usamos dados do config
         loginSuccess({ nome_comercial: staticUser.name, email, id: null });
         return;
     }
 
-    // 2. Backend
+    // 2. Restaurantes registados localmente
+    const localUser = getLocalRestaurants().find(u => u.email === email && u.password === pass);
+    if (localUser) {
+        loginSuccess({ nome_comercial: localUser.name, email, id: null });
+        return;
+    }
+
+    // 3. Backend
     fetch(`${API_URL}/login`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -59,7 +77,6 @@ function doLogin(event) {
             return;
         }
         const user = data.user;
-        // Buscar o restaurante associado ao user_id
         return fetch(`${API_URL}/restaurants/user/${user.id}`)
             .then(r => r.json())
             .then(rData => {
@@ -95,6 +112,13 @@ function doSignup(event) {
     const hours    = document.getElementById('signupHours').value.trim();
     const password = document.getElementById('signupPassword').value;
 
+    // Verificar se o email já existe localmente
+    const allLocal = [...DEMO_RESTAURANTS, ...getLocalRestaurants()];
+    if (allLocal.find(u => u.email === email)) {
+        showError('signupError', 'Este email já está registado.');
+        return;
+    }
+
     fetch(`${API_URL}/signup`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -103,6 +127,7 @@ function doSignup(event) {
     .then(r => r.json())
     .then(data => {
         if (data.success) {
+            saveLocalRestaurant({ name, email, password });
             alert('Conta criada com sucesso! Pode entrar agora.');
             switchAuthTab('login');
         } else {
@@ -110,7 +135,10 @@ function doSignup(event) {
         }
     })
     .catch(() => {
-        showError('signupError', 'Sem ligação ao servidor.');
+        // Sem backend — guardar só localmente para demo
+        saveLocalRestaurant({ name, email, password });
+        alert('Conta criada (modo demo). Pode entrar agora.');
+        switchAuthTab('login');
     });
 }
 

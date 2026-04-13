@@ -1,3 +1,5 @@
+const API_URL = API;
+
 // Auth tab switch
 function switchTab(tab) {
     document.querySelectorAll('.auth-tab').forEach((t, i) => {
@@ -20,6 +22,18 @@ function clearError(id) {
     el.classList.remove('visible');
 }
 
+// Utilizadores locais (demo/offline)
+function getLocalUsers() {
+    try { return JSON.parse(localStorage.getItem('unifood_local_users') || '[]'); }
+    catch { return []; }
+}
+
+function saveLocalUser(user) {
+    const users = getLocalUsers();
+    users.push(user);
+    localStorage.setItem('unifood_local_users', JSON.stringify(users));
+}
+
 // Login
 function doLogin(event) {
     event.preventDefault();
@@ -35,7 +49,14 @@ function doLogin(event) {
         return;
     }
 
-    // 2. Backend
+    // 2. Utilizadores registados localmente
+    const localUser = getLocalUsers().find(u => u.email === email && u.password === password);
+    if (localUser) {
+        loginSuccess(localUser.name);
+        return;
+    }
+
+    // 3. Backend
     fetch(`${API_URL}/login`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -43,7 +64,7 @@ function doLogin(event) {
     })
     .then(r => r.json())
     .then(data => {
-        if (data.success) loginSuccess(data.name || email.split('@')[0]);
+        if (data.success) loginSuccess(data.user.name || email.split('@')[0]);
         else showError('loginError', data.message || 'Email ou palavra-passe incorretos.');
     })
     .catch(() => {
@@ -75,6 +96,14 @@ function doSignup(event) {
         return;
     }
 
+    // Verificar se o email já existe localmente
+    const allLocal = [...DEMO_USERS, ...getLocalUsers()];
+    if (allLocal.find(u => u.email === email)) {
+        showError('signupError', 'Este email já está registado.');
+        return;
+    }
+
+    // Tentar backend
     fetch(`${API_URL}/signup`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -83,6 +112,7 @@ function doSignup(event) {
     .then(r => r.json())
     .then(data => {
         if (data.success) {
+            saveLocalUser({ name, email, password });
             alert('Conta criada com sucesso! Pode entrar agora.');
             switchTab('login');
         } else {
@@ -90,7 +120,10 @@ function doSignup(event) {
         }
     })
     .catch(() => {
-        showError('signupError', 'Sem ligação ao servidor. O registo requer conexão ao backend.');
+        // Sem backend — guardar só localmente para demo
+        saveLocalUser({ name, email, password });
+        alert('Conta criada com sucesso!. Pode entrar agora.');
+        switchTab('login');
     });
 }
 
