@@ -22,7 +22,24 @@ function clearError(id) {
     el.classList.remove('visible');
 }
 
-// Utilizadores locais (demo/offline)
+// Loading
+function showLoading(msg = 'A processar…') {
+    document.getElementById('loadingText').textContent = msg;
+    document.getElementById('loadingOverlay').classList.add('active');
+}
+
+function hideLoading() {
+    document.getElementById('loadingOverlay').classList.remove('active');
+}
+
+// Tokens locais (demo offline)
+function saveLocalToken(token) {
+    const tokens = JSON.parse(localStorage.getItem('unifood_local_tokens') || '[]');
+    if (!tokens.includes(token)) tokens.push(token);
+    localStorage.setItem('unifood_local_tokens', JSON.stringify(tokens));
+}
+
+
 function getLocalUsers() {
     try { return JSON.parse(localStorage.getItem('unifood_local_users') || '[]'); }
     catch { return []; }
@@ -57,6 +74,7 @@ function doLogin(event) {
     }
 
     // 3. Backend
+    showLoading('A entrar…');
     fetch(`${API_URL}/login`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -64,10 +82,12 @@ function doLogin(event) {
     })
     .then(r => r.json())
     .then(data => {
+        hideLoading();
         if (data.success) loginSuccess(data.user.name || email.split('@')[0]);
         else showError('loginError', data.message || 'Email ou palavra-passe incorretos.');
     })
     .catch(() => {
+        hideLoading();
         showError('loginError', 'Email ou palavra-passe incorretos.');
     });
 }
@@ -175,7 +195,19 @@ function showMenuPage() {
     showPage('menusPage');
 }
 
+// Estado da reserva atual
+let currentReservation = null;
+
 function nextStep(stepNumber) {
+    // Ao avançar para o step3 (confirmação), criar reserva e gerar QR
+    if (stepNumber === 3) {
+        createReservationAndShowQR();
+        return;
+    }
+    goToStep(stepNumber);
+}
+
+function goToStep(stepNumber) {
     document.querySelectorAll('.step').forEach(step => {
         step.classList.remove('active');
         if (parseInt(step.dataset.step) <= stepNumber) step.classList.add('active');
@@ -184,9 +216,65 @@ function nextStep(stepNumber) {
     document.getElementById('step' + stepNumber).classList.add('active');
 }
 
-function prevStep(n) { nextStep(n); }
+function createReservationAndShowQR() {
+    showLoading('A criar reserva…');
+    const restaurant_id = 2;
 
-function resetReservationSteps() { nextStep(1); }
+    fetch(`${API_URL}/reservations`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ student_id: 1, restaurant_id, menu_id: null })
+    })
+    .then(r => r.json())
+    .then(data => {
+        hideLoading();
+        const token = data.success ? data.reservation.qr_token : generateLocalToken();
+        saveLocalToken(token);
+        showQRStep(token);
+    })
+    .catch(() => {
+        hideLoading();
+        const token = generateLocalToken();
+        saveLocalToken(token);
+        showQRStep(token);
+    });
+}
+
+function generateLocalToken() {
+    return Math.random().toString(36).substring(2, 8).toUpperCase();
+}
+
+function showQRStep(token) {
+    currentReservation = { token };
+    document.getElementById('qrTokenDisplay').textContent = token;
+
+    // Limpar e gerar QR
+    const container = document.getElementById('qrCodeContainer');
+    container.innerHTML = '';
+    new QRCode(container, {
+        text: token,
+        width: 180,
+        height: 180,
+        colorDark: '#048045',
+        colorLight: '#ffffff',
+        correctLevel: QRCode.CorrectLevel.H
+    });
+
+    goToStep(3);
+}
+
+function downloadQR() {
+    const canvas = document.querySelector('#qrCodeContainer canvas');
+    if (!canvas) return;
+    const link = document.createElement('a');
+    link.download = `unifood-reserva-${currentReservation?.token || 'qr'}.png`;
+    link.href = canvas.toDataURL();
+    link.click();
+}
+
+function prevStep(n) { goToStep(n); }
+
+function resetReservationSteps() { goToStep(1); }
 
 document.addEventListener('DOMContentLoaded', function () {
     // Restaurar sessão

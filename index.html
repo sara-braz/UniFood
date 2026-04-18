@@ -291,11 +291,17 @@
                     </div>
                 </div>
                 <div id="step3" class="step-content">
-                    <h3>Reserva Confirmada!</h3>
+                    <h3>Reserva Confirmada! 🎉</h3>
                     <p>A sua reserva foi efetuada com sucesso.</p>
-                    <p>Número da senha: <strong>#A5B2C9</strong></p>
-                    <p>Apresente esta senha no estabelecimento para levantar a sua refeição.</p>
+                    <p style="margin-top:8px">Apresente o QR Code abaixo no restaurante para levantar a sua refeição.</p>
+
+                    <div style="text-align:center; margin: 24px 0;">
+                        <div id="qrCodeContainer" style="display:inline-block; padding:16px; background:white; border:1px solid #eee; border-radius:12px;"></div>
+                        <p style="margin-top:12px; font-size:0.85rem; color:#6b6b6b;">Senha: <strong id="qrTokenDisplay"></strong></p>
+                    </div>
+
                     <div class="navigation">
+                        <button class="btn btn-ghost" onclick="downloadQR()">⬇️ Guardar QR</button>
                         <button class="btn btn-primary" onclick="showPage('mainMenuPage')">Voltar ao Menu Principal</button>
                     </div>
                 </div>
@@ -317,6 +323,13 @@
         © UniFood — Projeto ISCTE‑Sintra • Desenvolvido por Grupo A3
     </footer>
 
+    <!-- Loading overlay -->
+    <div class="loading-overlay" id="loadingOverlay">
+        <div class="spinner"></div>
+        <div class="loading-text" id="loadingText">A processar…</div>
+    </div>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
     <script src="config.js"></script>
     <script src="index.js"></script>
 </body>

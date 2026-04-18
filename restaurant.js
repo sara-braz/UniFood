@@ -8,6 +8,16 @@ const API_URL = API;
 
 const weekDays = ['Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sáb', 'Dom'];
 
+// Loading
+function showLoading(msg = 'A carregar…') {
+    document.getElementById('loadingText').textContent = msg;
+    document.getElementById('loadingOverlay').classList.add('active');
+}
+
+function hideLoading() {
+    document.getElementById('loadingOverlay').classList.remove('active');
+}
+
 // AUTH TABS
 function switchAuthTab(tab) {
     document.querySelectorAll('.auth-tab').forEach((t, i) => {
@@ -162,14 +172,13 @@ function showTab(pageId, navEl) {
 
 // INIT DASHBOARD
 async function initDashboard() {
+    showLoading('A carregar dashboard…');
     document.getElementById('topbarDate').textContent = new Date().toLocaleDateString('pt-PT', {
         weekday: 'long', day: 'numeric', month: 'long'
     });
 
-    await Promise.all([
-        loadMenu(),
-        loadReservations()
-    ]);
+    await Promise.all([loadMenu(), loadReservations()]);
+    hideLoading();
 
     renderBarChart();
     updateStats();
@@ -487,7 +496,97 @@ function deleteMenuItem(id) {
     });
 }
 
-// SET DATE ON LOAD
+// QR CODE VALIDATION
+function openQRModal() {
+    document.getElementById('qrTokenInput').value = '';
+    const result = document.getElementById('qrValidateResult');
+    result.textContent = '';
+    result.classList.remove('visible');
+    result.style.background = '';
+    result.style.color = '';
+    result.style.borderColor = '';
+    document.getElementById('qrModal').classList.add('open');
+    setTimeout(() => document.getElementById('qrTokenInput').focus(), 100);
+}
+
+function closeQRModal() {
+    document.getElementById('qrModal').classList.remove('open');
+}
+
+function validateQR() {
+    const token = document.getElementById('qrTokenInput').value.trim().toUpperCase();
+    const resultEl = document.getElementById('qrValidateResult');
+
+    if (!token) {
+        setQRResult(resultEl, 'Insira um código.', false);
+        return;
+    }
+
+    showLoading('A validar…');
+
+    fetch(`${API_URL}/reservations/validate`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ qr_token: token, restaurant_id: currentRestaurant?.id })
+    })
+    .then(r => r.json())
+    .then(data => {
+        hideLoading();
+        if (data.success) {
+            setQRResult(resultEl, 'Reserva validada! Marcada como levantada.', true);
+            loadReservations();
+            setTimeout(closeQRModal, 2000);
+        } else {
+            setQRResult(resultEl, `${data.message || 'QR Code inválido.'}`, false);
+        }
+    })
+    .catch(() => {
+        hideLoading();
+        // Modo offline — verificar tokens locais gerados pelo index.js
+        const localTokens = JSON.parse(localStorage.getItem('unifood_local_tokens') || '[]');
+        const usedTokens  = JSON.parse(localStorage.getItem('unifood_used_tokens') || '[]');
+
+        if (usedTokens.includes(token)) {
+            setQRResult(resultEl, 'Esta reserva já foi levantada.', false);
+            return;
+        }
+
+        if (localTokens.includes(token)) {
+            // Marcar como usado
+            usedTokens.push(token);
+            localStorage.setItem('unifood_used_tokens', JSON.stringify(usedTokens));
+            // Atualizar na lista local se existir
+            const r = reservations.find(x => x.qr === token);
+            if (r) { r.status = 'collected'; renderReservations(); updateStats(); }
+            setQRResult(resultEl, 'Reserva validada (modo demo)!', true);
+            setTimeout(closeQRModal, 2000);
+        } else {
+            setQRResult(resultEl, 'QR Code não encontrado.', false);
+        }
+    });
+}
+
+function setQRResult(el, msg, success) {
+    el.textContent = msg;
+    el.style.background  = success ? '#dcfce7' : '#fee2e2';
+    el.style.color       = success ? '#15803d' : '#dc2626';
+    el.style.borderColor = success ? '#86efac' : '#fecaca';
+    el.classList.add('visible');
+}
+
+// Fechar modal QR ao clicar fora
+document.getElementById('qrModal')?.addEventListener('click', function(e) {
+    if (e.target === this) closeQRModal();
+});
+
+// Enter no input de token também valida
+document.addEventListener('DOMContentLoaded', function() {
+    document.getElementById('qrTokenInput')?.addEventListener('keydown', function(e) {
+        if (e.key === 'Enter') validateQR();
+    });
+});
+
+
 document.getElementById('topbarDate').textContent = new Date().toLocaleDateString('pt-PT', {
     weekday: 'long', day: 'numeric', month: 'long'
 });

@@ -195,11 +195,14 @@
 
         <!-- RESERVATIONS PAGE -->
         <div id="reservationsPage" class="page">
-            <div class="filters" id="statusFilters">
-                <button class="filter-btn active" onclick="filterReservations('all', this)">Todas</button>
-                <button class="filter-btn" onclick="filterReservations('pending', this)">Pendentes</button>
-                <button class="filter-btn" onclick="filterReservations('confirmed', this)">Confirmadas</button>
-                <button class="filter-btn" onclick="filterReservations('collected', this)">Levantadas</button>
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:16px; flex-wrap:wrap; gap:10px;">
+                <div class="filters" id="statusFilters" style="margin-bottom:0">
+                    <button class="filter-btn active" onclick="filterReservations('all', this)">Todas</button>
+                    <button class="filter-btn" onclick="filterReservations('pending', this)">Pendentes</button>
+                    <button class="filter-btn" onclick="filterReservations('confirmed', this)">Confirmadas</button>
+                    <button class="filter-btn" onclick="filterReservations('collected', this)">Levantadas</button>
+                </div>
+                <button class="btn btn-primary" onclick="openQRModal()">Validar QR Code</button>
             </div>
 
             <div class="search-bar">
@@ -278,6 +281,29 @@
             <button class="btn btn-primary" onclick="saveMenuItem()">Guardar</button>
         </div>
     </div>
+</div>
+
+<!-- QR VALIDATION MODAL -->
+<div class="modal-overlay" id="qrModal">
+    <div class="modal">
+        <h2>Validar QR Code</h2>
+        <p style="color:var(--muted);font-size:0.9rem;margin-bottom:20px">Insira o código da senha do estudante para marcar a reserva como levantada.</p>
+        <div class="form-group">
+            <label>Código da senha</label>
+            <input type="text" id="qrTokenInput" placeholder="Ex: A5B2C9" style="text-transform:uppercase; letter-spacing:0.1em; font-size:1.1rem; font-weight:600;">
+        </div>
+        <div id="qrValidateResult" class="error-msg"></div>
+        <div class="modal-footer">
+            <button class="btn btn-ghost" onclick="closeQRModal()">Cancelar</button>
+            <button class="btn btn-primary" onclick="validateQR()">Validar</button>
+        </div>
+    </div>
+</div>
+
+<!-- Loading overlay -->
+<div class="loading-overlay" id="loadingOverlay">
+    <div class="spinner"></div>
+    <div class="loading-text" id="loadingText">A carregar…</div>
 </div>
 
 <script src="config.js"></script>
