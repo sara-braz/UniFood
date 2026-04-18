@@ -142,8 +142,10 @@
                             <h3>Pastelaria Monserrate Confeitaria</h3>
                             <p class="restaurant-detail">Horário:<br>Segunda a Sexta: 7h30 - 19h00<br>Sábado e Domingo: 8h00 - 19h00</p>
                             <p class="restaurant-detail">Localização: Av. Heliodoro Salgado 4, 2710-561 Sintra</p>
-                            <button class="btn btn-primary reserve-btn" onclick="showReservationPage()">Fazer Reserva</button>
-                            <button class="btn btn-primary reserve-btn" onclick="showMenuPage()">Menu</button>
+                            <div class="restaurant-buttons">
+                                <button class="btn btn-primary reserve-btn" onclick="showReservationPage('Pastelaria Monserrate Confeitaria')">Fazer Reserva</button>
+                                <button class="btn btn-primary reserve-btn" onclick="showMenuPage()">Menu</button>
+                            </div>
                         </div>
                     </div>
                     <div class="restaurant-card">
@@ -154,8 +156,10 @@
                             <h3>Tulipa de Sintra</h3>
                             <p class="restaurant-detail">Horário:<br>Segunda a Sábado: 7h00 - 18h00</p>
                             <p class="restaurant-detail">Localização: Av. Heliodoro Salgado 53, 2710-575 Sintra</p>
-                            <button class="btn btn-primary reserve-btn" onclick="showReservationPage()">Fazer Reserva</button>
-                            <button class="btn btn-primary reserve-btn" onclick="showMenuPage()">Menu</button>
+                            <div class="restaurant-buttons">
+                                <button class="btn btn-primary reserve-btn" onclick="showReservationPage('Tulipa de Sintra')">Fazer Reserva</button>
+                                <button class="btn btn-primary reserve-btn" onclick="showMenuPage()">Menu</button>
+                            </div>
                         </div>
                     </div>
                     <div class="restaurant-card">
@@ -166,8 +170,10 @@
                             <h3>O Caralhinho Bar & Restaurante</h3>
                             <p class="restaurant-detail">Horário:<br>Terça a Sábado: 12h30 - 15h30 e 19h00 - 22h00</p>
                             <p class="restaurant-detail">Localização: Mercado Municipal da Estefânia, Sintra, Portugal 2710-605</p>
-                            <button class="btn btn-primary reserve-btn" onclick="showReservationPage()">Fazer Reserva</button>
-                            <button class="btn btn-primary reserve-btn" onclick="showMenuPage()">Menu</button>
+                            <div class="restaurant-buttons">
+                                <button class="btn btn-primary reserve-btn" onclick="showReservationPage('O Caralhinho Bar & Restaurante')">Fazer Reserva</button>
+                                <button class="btn btn-primary reserve-btn" onclick="showMenuPage()">Menu</button>
+                            </div>
                         </div>
                     </div>
                     <div class="restaurant-card">
@@ -178,8 +184,10 @@
                             <h3>Pizaria do Mercado</h3>
                             <p class="restaurant-detail">Horário:<br>Terça a Sábado: 10h30 - 15h00 e 19h00 - 22h00</p>
                             <p class="restaurant-detail">Localização: Mercado Municipal da Estefânia Loja 15, Sintra, Portugal 2710-605</p>
-                            <button class="btn btn-primary reserve-btn" onclick="showReservationPage()">Fazer Reserva</button>
-                            <button class="btn btn-primary reserve-btn" onclick="showMenuPage()">Menu</button>
+                            <div class="restaurant-buttons">
+                                <button class="btn btn-primary reserve-btn" onclick="showReservationPage('Pizaria do Mercado')">Fazer Reserva</button>
+                                <button class="btn btn-primary reserve-btn" onclick="showMenuPage()">Menu</button>
+                            </div>
                         </div>
                     </div>
                     <div class="restaurant-card">
@@ -190,8 +198,10 @@
                             <h3>Monkys</h3>
                             <p class="restaurant-detail">Horário:<br>Terças: 11h00 - 14h00<br>Quartas: 11h00 - 15h00<br>Quinta a Sábado: 11h00 - 22h00</p>
                             <p class="restaurant-detail">Localização: Mercado da Estefânia, R. Cap. Mário Alberto Soares Pimentel, 2710-589 Sintra</p>
-                            <button class="btn btn-primary reserve-btn" onclick="showReservationPage()">Fazer Reserva</button>
-                            <button class="btn btn-primary reserve-btn" onclick="showMenuPage()">Menu</button>
+                            <div class="restaurant-buttons">
+                                <button class="btn btn-primary reserve-btn" onclick="showReservationPage('Monkys')">Fazer Reserva</button>
+                                <button class="btn btn-primary reserve-btn" onclick="showMenuPage()">Menu</button>
+                            </div>
                         </div>
                     </div>
                     <div class="restaurant-card">
@@ -202,8 +212,10 @@
                             <h3>O Melhor Croissant da Minha Rua</h3>
                             <p class="restaurant-detail">Horário:<br>Segunda a Domingo: 08h30 - 19h00</p>
                             <p class="restaurant-detail">Localização: Mercado da Estefânia, R. Cap. Mário Alberto Soares Pimentel, 2710-589 Sintra</p>
-                            <button class="btn btn-primary reserve-btn" onclick="showReservationPage()">Fazer Reserva</button>
-                            <button class="btn btn-primary reserve-btn" onclick="showMenuPage()">Menu</button>
+                            <div class="restaurant-buttons">
+                                <button class="btn btn-primary reserve-btn" onclick="showReservationPage('O Melhor Croissant da Minha Rua')">Fazer Reserva</button>
+                                <button class="btn btn-primary reserve-btn" onclick="showMenuPage()">Menu</button>
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -245,19 +257,61 @@
                 <div class="reservation-steps">
                     <div class="step active" data-step="1">
                         <div class="step-number">1</div>
-                        <div class="step-label">Escolha</div>
+                        <div class="step-label">Restaurante</div>
                     </div>
                     <div class="step" data-step="2">
                         <div class="step-number">2</div>
-                        <div class="step-label">Pagamento</div>
+                        <div class="step-label">Modalidade</div>
                     </div>
                     <div class="step" data-step="3">
                         <div class="step-number">3</div>
+                        <div class="step-label">Pagamento</div>
+                    </div>
+                    <div class="step" data-step="4">
+                        <div class="step-number">4</div>
                         <div class="step-label">Confirmação</div>
                     </div>
                 </div>
+
+                <!-- Step 1: Escolher restaurante -->
                 <div id="step1" class="step-content active">
+                    <h3>Escolha o restaurante</h3>
+                    <div class="restaurant-select-grid">
+                        <div class="restaurant-select-card" onclick="selectRestaurant(this, 'Pastelaria Monserrate Confeitaria')">
+                            <div class="rs-name">Pastelaria Monserrate</div>
+                            <div class="rs-hours">Seg-Sex 7h30–19h00</div>
+                        </div>
+                        <div class="restaurant-select-card" onclick="selectRestaurant(this, 'Tulipa de Sintra')">
+                            <div class="rs-name">Tulipa de Sintra</div>
+                            <div class="rs-hours">Seg-Sáb 7h00–18h00</div>
+                        </div>
+                        <div class="restaurant-select-card" onclick="selectRestaurant(this, 'O Caralhinho Bar & Restaurante')">
+                            <div class="rs-name">O Caralhinho</div>
+                            <div class="rs-hours">Ter-Sáb 12h30–22h00</div>
+                        </div>
+                        <div class="restaurant-select-card" onclick="selectRestaurant(this, 'Pizaria do Mercado')">
+                            <div class="rs-name">Pizaria do Mercado</div>
+                            <div class="rs-hours">Ter-Sáb 10h30–22h00</div>
+                        </div>
+                        <div class="restaurant-select-card" onclick="selectRestaurant(this, 'Monkys')">
+                            <div class="rs-name">Monkys</div>
+                            <div class="rs-hours">Ter-Sáb 11h00–22h00</div>
+                        </div>
+                        <div class="restaurant-select-card" onclick="selectRestaurant(this, 'O Melhor Croissant da Minha Rua')">
+                            <div class="rs-name">O Melhor Croissant</div>
+                            <div class="rs-hours">Todos os dias 8h30–19h00</div>
+                        </div>
+                    </div>
+                    <div class="navigation">
+                        <button class="btn btn-ghost" onclick="showPage('mainMenuPage')">Cancelar</button>
+                        <button class="btn btn-primary" onclick="nextStep(2)">Continuar</button>
+                    </div>
+                </div>
+
+                <!-- Step 2: Modalidade -->
+                <div id="step2" class="step-content">
                     <h3>Escolha a modalidade da refeição</h3>
+                    <p id="selectedRestaurantLabel" style="color:var(--accent);font-weight:600;margin-bottom:16px"></p>
                     <div class="meal-options">
                         <div class="meal-option" data-type="takeaway">
                             <h4>Take-away</h4>
@@ -269,11 +323,13 @@
                         </div>
                     </div>
                     <div class="navigation">
-                        <button class="btn btn-ghost" onclick="showPage('mainMenuPage')">Cancelar</button>
-                        <button class="btn btn-primary" onclick="nextStep(2)">Continuar</button>
+                        <button class="btn btn-ghost" onclick="prevStep(1)">Voltar</button>
+                        <button class="btn btn-primary" onclick="nextStep(3)">Continuar</button>
                     </div>
                 </div>
-                <div id="step2" class="step-content">
+
+                <!-- Step 3: Pagamento -->
+                <div id="step3" class="step-content">
                     <h3>Método de Pagamento</h3>
                     <div class="payment-methods">
                         <label class="payment-method">
@@ -286,20 +342,20 @@
                         </label>
                     </div>
                     <div class="navigation">
-                        <button class="btn btn-ghost" onclick="prevStep(1)">Voltar</button>
-                        <button class="btn btn-primary" onclick="nextStep(3)">Pagar</button>
+                        <button class="btn btn-ghost" onclick="prevStep(2)">Voltar</button>
+                        <button class="btn btn-primary" onclick="nextStep(4)">Pagar</button>
                     </div>
                 </div>
-                <div id="step3" class="step-content">
+
+                <!-- Step 4: Confirmação + QR -->
+                <div id="step4" class="step-content">
                     <h3>Reserva Confirmada! 🎉</h3>
                     <p>A sua reserva foi efetuada com sucesso.</p>
                     <p style="margin-top:8px">Apresente o QR Code abaixo no restaurante para levantar a sua refeição.</p>
-
                     <div style="text-align:center; margin: 24px 0;">
                         <div id="qrCodeContainer" style="display:inline-block; padding:16px; background:white; border:1px solid #eee; border-radius:12px;"></div>
                         <p style="margin-top:12px; font-size:0.85rem; color:#6b6b6b;">Senha: <strong id="qrTokenDisplay"></strong></p>
                     </div>
-
                     <div class="navigation">
                         <button class="btn btn-ghost" onclick="downloadQR()">⬇️ Guardar QR</button>
                         <button class="btn btn-primary" onclick="showPage('mainMenuPage')">Voltar ao Menu Principal</button>

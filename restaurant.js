@@ -75,6 +75,7 @@ function doLogin(event) {
     }
 
     // 3. Backend
+    showLoading('A entrar…');
     fetch(`${API_URL}/login`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -83,6 +84,7 @@ function doLogin(event) {
     .then(r => r.json())
     .then(data => {
         if (!data.success) {
+            hideLoading();
             showError('loginError', data.message || 'Email ou palavra-passe incorretos.');
             return;
         }
@@ -90,6 +92,7 @@ function doLogin(event) {
         return fetch(`${API_URL}/restaurants/user/${user.id}`)
             .then(r => r.json())
             .then(rData => {
+                hideLoading();
                 if (!rData.success) {
                     showError('loginError', 'Utilizador não tem restaurante associado.');
                     return;
@@ -98,6 +101,7 @@ function doLogin(event) {
             });
     })
     .catch(() => {
+        hideLoading();
         showError('loginError', 'Sem ligação ao servidor.');
     });
 }
@@ -129,6 +133,7 @@ function doSignup(event) {
         return;
     }
 
+    showLoading('A criar conta…');
     fetch(`${API_URL}/signup`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -136,6 +141,7 @@ function doSignup(event) {
     })
     .then(r => r.json())
     .then(data => {
+        hideLoading();
         if (data.success) {
             saveLocalRestaurant({ name, email, password });
             alert('Conta criada com sucesso! Pode entrar agora.');
@@ -145,7 +151,7 @@ function doSignup(event) {
         }
     })
     .catch(() => {
-        // Sem backend — guardar só localmente para demo
+        hideLoading();
         saveLocalRestaurant({ name, email, password });
         alert('Conta criada (modo demo). Pode entrar agora.');
         switchAuthTab('login');
@@ -518,7 +524,7 @@ function validateQR() {
     const resultEl = document.getElementById('qrValidateResult');
 
     if (!token) {
-        setQRResult(resultEl, 'Insira um código.', false);
+        setQRResult(resultEl, '❌ Insira um código.', false);
         return;
     }
 
@@ -533,11 +539,11 @@ function validateQR() {
     .then(data => {
         hideLoading();
         if (data.success) {
-            setQRResult(resultEl, 'Reserva validada! Marcada como levantada.', true);
+            setQRResult(resultEl, '✅ Reserva validada! Marcada como levantada.', true);
             loadReservations();
             setTimeout(closeQRModal, 2000);
         } else {
-            setQRResult(resultEl, `${data.message || 'QR Code inválido.'}`, false);
+            setQRResult(resultEl, `❌ ${data.message || 'QR Code inválido.'}`, false);
         }
     })
     .catch(() => {
@@ -547,7 +553,7 @@ function validateQR() {
         const usedTokens  = JSON.parse(localStorage.getItem('unifood_used_tokens') || '[]');
 
         if (usedTokens.includes(token)) {
-            setQRResult(resultEl, 'Esta reserva já foi levantada.', false);
+            setQRResult(resultEl, '❌ Esta reserva já foi levantada.', false);
             return;
         }
 
@@ -558,10 +564,10 @@ function validateQR() {
             // Atualizar na lista local se existir
             const r = reservations.find(x => x.qr === token);
             if (r) { r.status = 'collected'; renderReservations(); updateStats(); }
-            setQRResult(resultEl, 'Reserva validada (modo demo)!', true);
+            setQRResult(resultEl, '✅ Reserva validada (modo demo)!', true);
             setTimeout(closeQRModal, 2000);
         } else {
-            setQRResult(resultEl, 'QR Code não encontrado.', false);
+            setQRResult(resultEl, '❌ QR Code não encontrado.', false);
         }
     });
 }

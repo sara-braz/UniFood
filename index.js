@@ -124,6 +124,7 @@ function doSignup(event) {
     }
 
     // Tentar backend
+    showLoading('A criar conta…');
     fetch(`${API_URL}/signup`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -131,6 +132,7 @@ function doSignup(event) {
     })
     .then(r => r.json())
     .then(data => {
+        hideLoading();
         if (data.success) {
             saveLocalUser({ name, email, password });
             alert('Conta criada com sucesso! Pode entrar agora.');
@@ -140,9 +142,9 @@ function doSignup(event) {
         }
     })
     .catch(() => {
-        // Sem backend — guardar só localmente para demo
+        hideLoading();
         saveLocalUser({ name, email, password });
-        alert('Conta criada com sucesso!. Pode entrar agora.');
+        alert('Conta criada (modo demo). Pode entrar agora.');
         switchTab('login');
     });
 }
@@ -186,8 +188,22 @@ function showPage(pageId) {
     document.getElementById(pageId).classList.add('active');
 }
 
-function showReservationPage() {
+function showReservationPage(restaurantName = null) {
     showPage('reservationPage');
+    selectedRestaurantName = null;
+    // Limpar seleção anterior
+    document.querySelectorAll('.restaurant-select-card').forEach(c => c.classList.remove('selected'));
+    // Se veio de "Fazer Reserva" num cartão específico, pré-selecionar
+    if (restaurantName) {
+        const cards = document.querySelectorAll('.restaurant-select-card');
+        cards.forEach(c => {
+            if (c.querySelector('.rs-name').textContent.trim() === restaurantName ||
+                restaurantName.includes(c.querySelector('.rs-name').textContent.trim())) {
+                c.classList.add('selected');
+                selectedRestaurantName = restaurantName;
+            }
+        });
+    }
     resetReservationSteps();
 }
 
@@ -197,10 +213,24 @@ function showMenuPage() {
 
 // Estado da reserva atual
 let currentReservation = null;
+let selectedRestaurantName = null;
+
+function selectRestaurant(card, name) {
+    document.querySelectorAll('.restaurant-select-card').forEach(c => c.classList.remove('selected'));
+    card.classList.add('selected');
+    selectedRestaurantName = name;
+}
 
 function nextStep(stepNumber) {
-    // Ao avançar para o step3 (confirmação), criar reserva e gerar QR
-    if (stepNumber === 3) {
+    // Validações antes de avançar
+    if (stepNumber === 2 && !selectedRestaurantName) {
+        alert('Por favor selecione um restaurante.');
+        return;
+    }
+    if (stepNumber === 2) {
+        document.getElementById('selectedRestaurantLabel').textContent = '📍 ' + selectedRestaurantName;
+    }
+    if (stepNumber === 4) {
         createReservationAndShowQR();
         return;
     }
@@ -260,7 +290,7 @@ function showQRStep(token) {
         correctLevel: QRCode.CorrectLevel.H
     });
 
-    goToStep(3);
+    goToStep(4);
 }
 
 function downloadQR() {
@@ -275,7 +305,6 @@ function downloadQR() {
 function prevStep(n) { goToStep(n); }
 
 function resetReservationSteps() { goToStep(1); }
-
 document.addEventListener('DOMContentLoaded', function () {
     // Restaurar sessão
     const savedName = localStorage.getItem('unifood_student');
