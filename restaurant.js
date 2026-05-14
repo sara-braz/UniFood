@@ -187,6 +187,7 @@ async function initDashboard() {
     hideLoading();
 
     renderBarChart();
+    renderDonutChart();
     updateStats();
     renderTopItems();
 }
@@ -229,6 +230,7 @@ async function loadReservations() {
             qr: r.qr_token,
             student: r.student_name || r.student_email || '—',
             item: r.nome_menu || '—',
+            date: r.created_at,
             time: new Date(r.created_at).toLocaleTimeString('pt-PT', { hour: '2-digit', minute: '2-digit' }),
             status: r.status
         }));
@@ -251,24 +253,76 @@ function updateStats() {
 }
 
 function renderBarChart() {
-    // Agrupar reservas por dia da semana
     const counts = [0, 0, 0, 0, 0, 0, 0];
     reservations.forEach(r => {
-        // usa índice 0=Dom..6=Sab, ajusta para Seg=0
-        const day = new Date(r.created_at || Date.now()).getDay();
-        const idx = (day + 6) % 7;
+        const day = new Date(r.date || Date.now()).getDay();
+        const idx = (day + 6) % 7; // 0=Dom..6=Sab → 0=Seg..6=Dom
         counts[idx]++;
     });
+    const todayIdx = (new Date().getDay() + 6) % 7;
     const max = Math.max(...counts, 1);
     const container = document.getElementById('barChart');
     container.innerHTML = counts.map((v, i) => `
         <div class="bar-wrap">
-            <div class="bar ${i === new Date().getDay() ? 'today' : ''}"
+            <div class="bar ${i === todayIdx ? 'today' : ''}"
                  style="height:${(v / max) * 100}%"
                  title="${v} reservas"></div>
             <div class="bar-label">${weekDays[i]}</div>
         </div>
     `).join('');
+}
+
+function renderDonutChart() {
+    const statusColors = {
+        pending:   '#d97706',
+        confirmed: '#048045',
+        collected: '#2563eb',
+        cancelled: '#dc2626'
+    };
+    const statusLabels = {
+        pending:   'Pendente',
+        confirmed: 'Confirmada',
+        collected: 'Levantada',
+        cancelled: 'Cancelada'
+    };
+
+    const counts = { pending: 0, confirmed: 0, collected: 0, cancelled: 0 };
+    reservations.forEach(r => {
+        if (counts[r.status] !== undefined) counts[r.status]++;
+    });
+    const total = Object.values(counts).reduce((a, b) => a + b, 0);
+
+    const donutEl = document.getElementById('donutChart');
+    const legendEl = document.getElementById('donutLegend');
+
+    if (!donutEl || !legendEl) return;
+
+    if (total === 0) {
+        donutEl.style.background = '#e5e7eb';
+        legendEl.innerHTML = `<div class="legend-item" style="justify-content:center;color:var(--muted)">Sem dados ainda</div>`;
+        return;
+    }
+
+    // Construir conic-gradient
+    let angle = 0;
+    const segments = Object.entries(counts)
+        .filter(([, v]) => v > 0)
+        .map(([key, v]) => {
+            const pct = (v / total) * 100;
+            const seg = { key, pct, start: angle, end: angle + pct, color: statusColors[key] };
+            angle += pct;
+            return seg;
+        });
+
+    const gradient = segments.map(s => `${s.color} ${s.start.toFixed(1)}% ${s.end.toFixed(1)}%`).join(', ');
+    donutEl.style.background = `conic-gradient(${gradient})`;
+
+    legendEl.innerHTML = segments.map(s => `
+        <div class="legend-item">
+            <div class="legend-dot" style="background:${s.color}"></div>
+            ${statusLabels[s.key]}
+            <span class="legend-pct">${s.pct.toFixed(0)}% <span style="font-weight:400;color:var(--muted)">(${counts[s.key]})</span></span>
+        </div>`).join('');
 }
 
 function renderTopItems() {

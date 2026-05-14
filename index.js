@@ -1,6 +1,6 @@
 const API_URL = API;
 
-// Auth tab switch
+// ── Auth tab switch ──
 function switchTab(tab) {
     document.querySelectorAll('.auth-tab').forEach((t, i) => {
         t.classList.toggle('active', (i === 0 && tab === 'login') || (i === 1 && tab === 'signup'));
@@ -9,7 +9,7 @@ function switchTab(tab) {
     document.getElementById('signupForm').classList.toggle('active', tab === 'signup');
 }
 
-// Erro inline
+// ── Erro inline ──
 function showError(id, msg) {
     const el = document.getElementById(id);
     el.textContent = msg;
@@ -22,7 +22,7 @@ function clearError(id) {
     el.classList.remove('visible');
 }
 
-// Loading
+// ── Loading ──
 function showLoading(msg = 'A processar…') {
     document.getElementById('loadingText').textContent = msg;
     document.getElementById('loadingOverlay').classList.add('active');
@@ -32,11 +32,22 @@ function hideLoading() {
     document.getElementById('loadingOverlay').classList.remove('active');
 }
 
-// Tokens locais (demo offline)
+// ── Tokens e reservas locais (demo offline) ──
 function saveLocalToken(token) {
     const tokens = JSON.parse(localStorage.getItem('unifood_local_tokens') || '[]');
     if (!tokens.includes(token)) tokens.push(token);
     localStorage.setItem('unifood_local_tokens', JSON.stringify(tokens));
+}
+
+function saveLocalReservation(reservation) {
+    const list = JSON.parse(localStorage.getItem('unifood_local_reservations') || '[]');
+    list.unshift(reservation); // mais recente primeiro
+    localStorage.setItem('unifood_local_reservations', JSON.stringify(list));
+}
+
+function getLocalReservations() {
+    try { return JSON.parse(localStorage.getItem('unifood_local_reservations') || '[]'); }
+    catch { return []; }
 }
 
 
@@ -51,7 +62,7 @@ function saveLocalUser(user) {
     localStorage.setItem('unifood_local_users', JSON.stringify(users));
 }
 
-// Login
+// ── Login ──
 function doLogin(event) {
     event.preventDefault();
     clearError('loginError');
@@ -62,14 +73,14 @@ function doLogin(event) {
     // 1. Credenciais estáticas (config.js)
     const staticUser = DEMO_USERS.find(u => u.email === email && u.password === password);
     if (staticUser) {
-        loginSuccess(staticUser.name);
+        loginSuccess({ name: staticUser.name, id: null });
         return;
     }
 
     // 2. Utilizadores registados localmente
     const localUser = getLocalUsers().find(u => u.email === email && u.password === password);
     if (localUser) {
-        loginSuccess(localUser.name);
+        loginSuccess({ name: localUser.name, id: null });
         return;
     }
 
@@ -83,7 +94,7 @@ function doLogin(event) {
     .then(r => r.json())
     .then(data => {
         hideLoading();
-        if (data.success) loginSuccess(data.user.name || email.split('@')[0]);
+        if (data.success) loginSuccess({ name: data.user.name, id: data.user.id });
         else showError('loginError', data.message || 'Email ou palavra-passe incorretos.');
     })
     .catch(() => {
@@ -92,15 +103,20 @@ function doLogin(event) {
     });
 }
 
-function loginSuccess(name) {
-    localStorage.setItem('unifood_student', name);
-    document.getElementById('userName').textContent = name;
-    document.getElementById('userAvatar').textContent = name.charAt(0).toUpperCase();
+function loginSuccess(user) {
+    localStorage.setItem('unifood_student', JSON.stringify(user));
+    document.getElementById('userName').textContent = user.name;
+    document.getElementById('userAvatar').textContent = user.name.charAt(0).toUpperCase();
     document.getElementById('userInfo').style.display = 'flex';
     showPage('mainMenuPage');
 }
 
-// Sign Up
+function getStudentSession() {
+    try { return JSON.parse(localStorage.getItem('unifood_student')); }
+    catch { return null; }
+}
+
+// ── Sign Up ──
 function doSignup(event) {
     event.preventDefault();
     clearError('signupError');
@@ -134,7 +150,6 @@ function doSignup(event) {
     .then(data => {
         hideLoading();
         if (data.success) {
-            saveLocalUser({ name, email, password });
             alert('Conta criada com sucesso! Pode entrar agora.');
             switchTab('login');
         } else {
@@ -149,7 +164,7 @@ function doSignup(event) {
     });
 }
 
-// Logo → home
+// ── Logo → home ──
 function goHome() {
     // Só navega para o menu se já estiver autenticado
     const userInfo = document.getElementById('userInfo');
@@ -158,7 +173,7 @@ function goHome() {
     }
 }
 
-// Dropdown do utilizador
+// ── Dropdown do utilizador ──
 function toggleDropdown() {
     document.getElementById('userDropdown').classList.toggle('open');
 }
@@ -173,7 +188,6 @@ function doLogout() {
     switchTab('login');
     showPage('loginPage');
 }
-
 // Fechar dropdown ao clicar fora
 document.addEventListener('click', function (e) {
     const userInfo = document.getElementById('userInfo');
@@ -182,11 +196,89 @@ document.addEventListener('click', function (e) {
     }
 });
 
-// Navegação
+// ── Navegação ──
 function showPage(pageId) {
     document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
     document.getElementById(pageId).classList.add('active');
+    if (pageId === 'myReservationsPage') loadMyReservations();
 }
+
+// ── As Minhas Reservas ──
+function loadMyReservations() {
+    const container = document.getElementById('myReservationsList');
+    const session = getStudentSession();
+    const usedTokens = JSON.parse(localStorage.getItem('unifood_used_tokens') || '[]');
+
+    // Tentar carregar da BD se tiver id real
+    if (session?.id) {
+        showLoading('A carregar reservas…');
+        fetch(`${API_URL}/reservations/student/${session.id}`)
+        .then(r => r.json())
+        .then(data => {
+            hideLoading();
+            renderMyReservations(container, data.map(r => ({
+                token: r.qr_token,
+                restaurant: r.restaurant_nome || '—',
+                date: r.created_at,
+                status: r.status
+            })), usedTokens);
+        })
+        .catch(() => {
+            hideLoading();
+            renderMyReservations(container, getLocalReservations(), usedTokens);
+        });
+    } else {
+        renderMyReservations(container, getLocalReservations(), usedTokens);
+    }
+}
+
+function renderMyReservations(container, list, usedTokens) {
+    if (!list.length) {
+        container.innerHTML = `
+            <div style="text-align:center;padding:40px;color:#6b6b6b">
+                <div style="font-size:2.5rem;margin-bottom:12px">🎫</div>
+                <p>Ainda não tem reservas.</p>
+            </div>`;
+        return;
+    }
+
+    container.innerHTML = list.map(r => {
+        const used = usedTokens.includes(r.token);
+        const status = r.status || (used ? 'collected' : 'pending');
+        const statusLabel = { pending: 'Pendente', confirmed: 'Confirmada', collected: 'Levantada', cancelled: 'Cancelada' }[status] || status;
+        const statusColor = { pending: '#d97706', confirmed: '#048045', collected: '#2563eb', cancelled: '#dc2626' }[status] || '#6b6b6b';
+        const date = new Date(r.date).toLocaleDateString('pt-PT', { day: 'numeric', month: 'long', hour: '2-digit', minute: '2-digit' });
+
+        return `
+        <div style="background:white;border:1px solid #eee;border-radius:12px;padding:20px;margin-bottom:14px;display:flex;align-items:center;gap:20px;flex-wrap:wrap">
+            <div id="qr-mini-${r.token}" style="flex-shrink:0"></div>
+            <div style="flex:1;min-width:160px">
+                <div style="font-weight:700;font-size:1rem;color:#111;margin-bottom:4px">${r.restaurant || '—'}</div>
+                <div style="font-size:0.82rem;color:#6b6b6b;margin-bottom:6px">${date}</div>
+                <div style="font-size:0.8rem;font-weight:700;letter-spacing:0.08em;color:#444">Senha: ${r.token}</div>
+            </div>
+            <div style="text-align:right">
+                <span style="font-size:0.78rem;font-weight:700;padding:4px 10px;border-radius:20px;background:${statusColor}22;color:${statusColor}">${statusLabel}</span>
+            </div>
+        </div>`;
+    }).join('');
+
+    // Gerar QR miniatura para cada reserva
+    list.forEach(r => {
+        const el = document.getElementById(`qr-mini-${r.token}`);
+        if (el) {
+            new QRCode(el, {
+                text: r.token,
+                width: 70,
+                height: 70,
+                colorDark: '#048045',
+                colorLight: '#ffffff',
+                correctLevel: QRCode.CorrectLevel.M
+            });
+        }
+    });
+}
+
 
 function showReservationPage(restaurantName = null) {
     showPage('reservationPage');
@@ -211,7 +303,7 @@ function showMenuPage() {
     showPage('menusPage');
 }
 
-// Estado da reserva atual
+// ── Estado da reserva atual ──
 let currentReservation = null;
 let selectedRestaurantName = null;
 
@@ -248,24 +340,33 @@ function goToStep(stepNumber) {
 
 function createReservationAndShowQR() {
     showLoading('A criar reserva…');
+    const session = getStudentSession();
+    const student_id = session?.id || null;
     const restaurant_id = 2;
 
     fetch(`${API_URL}/reservations`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ student_id: 1, restaurant_id, menu_id: null })
+        body: JSON.stringify({ student_id, restaurant_id, menu_id: null })
     })
     .then(r => r.json())
     .then(data => {
         hideLoading();
-        const token = data.success ? data.reservation.qr_token : generateLocalToken();
+        if (!data.success) {
+            alert(data.message || 'Erro ao criar reserva.');
+            return;
+        }
+        const token = data.reservation.qr_token;
         saveLocalToken(token);
+        saveLocalReservation({ token, restaurant: selectedRestaurantName, date: new Date().toISOString() });
         showQRStep(token);
     })
     .catch(() => {
+        // servidor offline → modo demo
         hideLoading();
         const token = generateLocalToken();
         saveLocalToken(token);
+        saveLocalReservation({ token, restaurant: selectedRestaurantName, date: new Date().toISOString() });
         showQRStep(token);
     });
 }
@@ -306,10 +407,17 @@ function prevStep(n) { goToStep(n); }
 
 function resetReservationSteps() { goToStep(1); }
 document.addEventListener('DOMContentLoaded', function () {
-    // Restaurar sessão
-    const savedName = localStorage.getItem('unifood_student');
-    if (savedName) {
-        loginSuccess(savedName);
+    // ── Restaurar sessão ──
+    const savedSession = localStorage.getItem('unifood_student');
+    if (savedSession) {
+        try {
+            const user = JSON.parse(savedSession);
+            if (user?.name) loginSuccess(user);
+        } catch {
+            // formato antigo (string simples)
+            const name = savedSession;
+            if (name) loginSuccess({ name, id: null });
+        }
     }
 
     document.querySelectorAll('.feature-card').forEach(card => {

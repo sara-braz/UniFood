@@ -118,6 +118,11 @@
                     <h3>Reservar Refeição</h3>
                     <p>Faça a sua reserva através do sistema de senhas</p>
                 </div>
+                <div class="feature-card" data-page="myReservationsPage">
+                    <div class="feature-icon">🎫</div>
+                    <h3>As Minhas Reservas</h3>
+                    <p>Consulte as suas reservas e QR Codes anteriores</p>
+                </div>
                 <div class="feature-card" data-page="paymentPage">
                     <div class="feature-icon">💳</div>
                     <h3>Pagamento Online</h3>
@@ -361,6 +366,18 @@
                         <button class="btn btn-primary" onclick="showPage('mainMenuPage')">Voltar ao Menu Principal</button>
                     </div>
                 </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Página das Minhas Reservas -->
+    <section id="myReservationsPage" class="page">
+        <div class="container">
+            <div class="section">
+                <h2>As Minhas Reservas</h2>
+                <p>Histórico das suas reservas e senhas QR</p>
+                <div id="myReservationsList" style="margin-top:20px"></div>
+                <button class="btn btn-ghost back-btn" onclick="showPage('mainMenuPage')">Voltar ao Menu Principal</button>
             </div>
         </div>
     </section>
