@@ -1,6 +1,6 @@
 const API_URL = API;
 
-// ── Auth tab switch ──
+// Auth tab switch
 function switchTab(tab) {
     document.querySelectorAll('.auth-tab').forEach((t, i) => {
         t.classList.toggle('active', (i === 0 && tab === 'login') || (i === 1 && tab === 'signup'));
@@ -9,7 +9,7 @@ function switchTab(tab) {
     document.getElementById('signupForm').classList.toggle('active', tab === 'signup');
 }
 
-// ── Erro inline ──
+// Erro inline
 function showError(id, msg) {
     const el = document.getElementById(id);
     el.textContent = msg;
@@ -22,7 +22,7 @@ function clearError(id) {
     el.classList.remove('visible');
 }
 
-// ── Loading ──
+// Loading
 function showLoading(msg = 'A processar…') {
     document.getElementById('loadingText').textContent = msg;
     document.getElementById('loadingOverlay').classList.add('active');
@@ -32,7 +32,7 @@ function hideLoading() {
     document.getElementById('loadingOverlay').classList.remove('active');
 }
 
-// ── Tokens e reservas locais (demo offline) ──
+// Tokens e reservas locais (demo offline)
 function saveLocalToken(token) {
     const tokens = JSON.parse(localStorage.getItem('unifood_local_tokens') || '[]');
     if (!tokens.includes(token)) tokens.push(token);
@@ -62,7 +62,7 @@ function saveLocalUser(user) {
     localStorage.setItem('unifood_local_users', JSON.stringify(users));
 }
 
-// ── Login ──
+// Login
 function doLogin(event) {
     event.preventDefault();
     clearError('loginError');
@@ -116,7 +116,7 @@ function getStudentSession() {
     catch { return null; }
 }
 
-// ── Sign Up ──
+// Sign Up
 function doSignup(event) {
     event.preventDefault();
     clearError('signupError');
@@ -164,7 +164,7 @@ function doSignup(event) {
     });
 }
 
-// ── Logo → home ──
+// Logo → home
 function goHome() {
     // Só navega para o menu se já estiver autenticado
     const userInfo = document.getElementById('userInfo');
@@ -173,7 +173,7 @@ function goHome() {
     }
 }
 
-// ── Dropdown do utilizador ──
+// Dropdown do utilizador
 function toggleDropdown() {
     document.getElementById('userDropdown').classList.toggle('open');
 }
@@ -196,14 +196,14 @@ document.addEventListener('click', function (e) {
     }
 });
 
-// ── Navegação ──
+// Navegação
 function showPage(pageId) {
     document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
     document.getElementById(pageId).classList.add('active');
     if (pageId === 'myReservationsPage') loadMyReservations();
 }
 
-// ── As Minhas Reservas ──
+// As Minhas Reservas
 function loadMyReservations() {
     const container = document.getElementById('myReservationsList');
     const session = getStudentSession();
@@ -303,7 +303,7 @@ function showMenuPage() {
     showPage('menusPage');
 }
 
-// ── Estado da reserva atual ──
+// Estado da reserva atual
 let currentReservation = null;
 let selectedRestaurantName = null;
 
@@ -407,7 +407,7 @@ function prevStep(n) { goToStep(n); }
 
 function resetReservationSteps() { goToStep(1); }
 document.addEventListener('DOMContentLoaded', function () {
-    // ── Restaurar sessão ──
+    // Restaurar sessão
     const savedSession = localStorage.getItem('unifood_student');
     if (savedSession) {
         try {
