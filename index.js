@@ -1,5 +1,14 @@
 const API_URL = API;
 
+const RESTAURANT_IDS = {
+    'Pastelaria Monserrate Confeitaria': 3,
+    'Tulipa de Sintra': 4,
+    'O Caralhinho Bar & Restaurante': 5,
+    'Pizaria do Mercado': 2,
+    'Monkys': 6,
+    'O Melhor Croissant da Minha Rua': 7
+};
+
 // Auth tab switch
 function switchTab(tab) {
     document.querySelectorAll('.auth-tab').forEach((t, i) => {
@@ -23,7 +32,7 @@ function clearError(id) {
 }
 
 // Loading
-function showLoading(msg = 'A processar…') {
+function showLoading(msg = 'A processar...') {
     document.getElementById('loadingText').textContent = msg;
     document.getElementById('loadingOverlay').classList.add('active');
 }
@@ -85,7 +94,7 @@ function doLogin(event) {
     }
 
     // 3. Backend
-    showLoading('A entrar…');
+    showLoading('A entrar...');
     fetch(`${API_URL}/login`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -140,7 +149,7 @@ function doSignup(event) {
     }
 
     // Tentar backend
-    showLoading('A criar conta…');
+    showLoading('A criar conta...');
     fetch(`${API_URL}/signup`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -211,7 +220,7 @@ function loadMyReservations() {
 
     // Tentar carregar da BD se tiver id real
     if (session?.id) {
-        showLoading('A carregar reservas…');
+        showLoading('A carregar reservas...');
         fetch(`${API_URL}/reservations/student/${session.id}`)
         .then(r => r.json())
         .then(data => {
@@ -339,10 +348,19 @@ function goToStep(stepNumber) {
 }
 
 function createReservationAndShowQR() {
-    showLoading('A criar reserva…');
+    showLoading('A criar reserva...');
     const session = getStudentSession();
     const student_id = session?.id || null;
-    const restaurant_id = 2;
+    const restaurant_id = RESTAURANT_IDS[selectedRestaurantName] || null;
+
+    if (!student_id) {
+        hideLoading();
+        const token = generateLocalToken();
+        saveLocalToken(token);
+        saveLocalReservation({ token, restaurant: selectedRestaurantName, date: new Date().toISOString() });
+        showQRStep(token);
+        return;
+    }
 
     fetch(`${API_URL}/reservations`, {
         method: 'POST',

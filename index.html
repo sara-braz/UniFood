@@ -108,7 +108,7 @@
                     <h3>Consultar Restaurantes</h3>
                     <p>Veja todos os restaurantes e cafés disponíveis</p>
                 </div>
-                <div class="feature-card" data-page="menusPage">
+                <div class="feature-card" data-page="restaurantsPage">
                     <div class="feature-icon">📋</div>
                     <h3>Visualizar Menus</h3>
                     <p>Consulte os menus de cada estabelecimento</p>
@@ -149,7 +149,7 @@
                             <p class="restaurant-detail">Localização: Av. Heliodoro Salgado 4, 2710-561 Sintra</p>
                             <div class="restaurant-buttons">
                                 <button class="btn btn-primary reserve-btn" onclick="showReservationPage('Pastelaria Monserrate Confeitaria')">Fazer Reserva</button>
-                                <button class="btn btn-primary reserve-btn" onclick="showMenuPage()">Menu</button>
+                                <button class="btn btn-primary reserve-btn" onclick="showMenuPage(3, 'Pastelaria Monserrate Confeitaria')">Menu</button>
                             </div>
                         </div>
                     </div>
@@ -163,7 +163,7 @@
                             <p class="restaurant-detail">Localização: Av. Heliodoro Salgado 53, 2710-575 Sintra</p>
                             <div class="restaurant-buttons">
                                 <button class="btn btn-primary reserve-btn" onclick="showReservationPage('Tulipa de Sintra')">Fazer Reserva</button>
-                                <button class="btn btn-primary reserve-btn" onclick="showMenuPage()">Menu</button>
+                                <button class="btn btn-primary reserve-btn" onclick="showMenuPage(4, 'Tulipa de Sintra')">Menu</button>
                             </div>
                         </div>
                     </div>
@@ -177,7 +177,7 @@
                             <p class="restaurant-detail">Localização: Mercado Municipal da Estefânia, Sintra, Portugal 2710-605</p>
                             <div class="restaurant-buttons">
                                 <button class="btn btn-primary reserve-btn" onclick="showReservationPage('O Caralhinho Bar & Restaurante')">Fazer Reserva</button>
-                                <button class="btn btn-primary reserve-btn" onclick="showMenuPage()">Menu</button>
+                                <button class="btn btn-primary reserve-btn" onclick="showMenuPage(5, 'O Caralhinho Bar & Restaurante')">Menu</button>
                             </div>
                         </div>
                     </div>
@@ -191,7 +191,7 @@
                             <p class="restaurant-detail">Localização: Mercado Municipal da Estefânia Loja 15, Sintra, Portugal 2710-605</p>
                             <div class="restaurant-buttons">
                                 <button class="btn btn-primary reserve-btn" onclick="showReservationPage('Pizaria do Mercado')">Fazer Reserva</button>
-                                <button class="btn btn-primary reserve-btn" onclick="showMenuPage()">Menu</button>
+                                <button class="btn btn-primary reserve-btn" onclick="showMenuPage(2, 'Pizaria do Mercado')">Menu</button>
                             </div>
                         </div>
                     </div>
@@ -205,7 +205,7 @@
                             <p class="restaurant-detail">Localização: Mercado da Estefânia, R. Cap. Mário Alberto Soares Pimentel, 2710-589 Sintra</p>
                             <div class="restaurant-buttons">
                                 <button class="btn btn-primary reserve-btn" onclick="showReservationPage('Monkys')">Fazer Reserva</button>
-                                <button class="btn btn-primary reserve-btn" onclick="showMenuPage()">Menu</button>
+                                <button class="btn btn-primary reserve-btn" onclick="showMenuPage(6, 'Monkys')">Menu</button>
                             </div>
                         </div>
                     </div>
@@ -219,7 +219,7 @@
                             <p class="restaurant-detail">Localização: Mercado da Estefânia, R. Cap. Mário Alberto Soares Pimentel, 2710-589 Sintra</p>
                             <div class="restaurant-buttons">
                                 <button class="btn btn-primary reserve-btn" onclick="showReservationPage('O Melhor Croissant da Minha Rua')">Fazer Reserva</button>
-                                <button class="btn btn-primary reserve-btn" onclick="showMenuPage()">Menu</button>
+                                <button class="btn btn-primary reserve-btn" onclick="showMenuPage(7, 'O Melhor Croissant da Minha Rua')">Menu</button>
                             </div>
                         </div>
                     </div>
@@ -233,23 +233,9 @@
     <section id="menusPage" class="page">
         <div class="container">
             <div class="menu-container">
-                <h2>Menus Disponíveis</h2>
-                <div class="menu-item">
-                    <h3>Menu Pizaria do Mercado</h3>
-                    <div class="menu-content">
-                        <ul>
-                            <li>Fatia de Pizza: €3.50</li>
-                            <li>Fatia de Pizza c/ Bebida: €4.50</li>
-                            <li>2 Fatias de Pizza: €6.50</li>
-                            <li>2 Fatias de Pizza c/ Bebida: €7.50</li>
-                        </ul>
-                        <div class="pizza-image">
-                            <img src="https://raw.githubusercontent.com/sara-braz/UniFood/refs/heads/site-final/imagens/PM_Menu.jpeg" alt="Menu Pizaria do Mercado">
-                            <img src="https://raw.githubusercontent.com/sara-braz/UniFood/refs/heads/site-final/imagens/PM_Menu1.jpeg" alt="Menu Pizaria do Mercado">
-                        </div>
-                    </div>
-                </div>
-                <button class="btn btn-ghost back-btn" onclick="showPage('mainMenuPage')">Voltar ao Menu Principal</button>
+                <h2 id="menuPageTitle">Menu</h2>
+                <div id="menuItemsContainer"></div>
+                <button class="btn btn-ghost back-btn" onclick="showPage('restaurantsPage')">Voltar</button>
             </div>
         </div>
     </section>
@@ -405,5 +391,30 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
     <script src="config.js"></script>
     <script src="index.js"></script>
+    <script>
+async function showMenuPage(restaurantId, restaurantName) {
+    showPage('menusPage');
+    document.getElementById('menuPageTitle').textContent = 'Menu — ' + restaurantName;
+    const container = document.getElementById('menuItemsContainer');
+    container.innerHTML = '<p style="color:var(--muted)">A carregar menu...</p>';
+    try {
+        const res = await fetch(API + '/menu/' + restaurantId);
+        const items = await res.json();
+        if (!items.length) {
+            container.innerHTML = '<p style="color:var(--muted)">Sem itens disponíveis.</p>';
+            return;
+        }
+        container.innerHTML = items.map(item =>
+            '<div class="menu-item">' +
+            '<h3>' + item.nome_menu + '</h3>' +
+            (item.descricao ? '<p style="color:var(--muted);margin:6px 0">' + item.descricao + '</p>' : '') +
+            '<p style="font-weight:600;color:var(--accent);margin-top:8px">€' + parseFloat(item.preco).toFixed(2) + '</p>' +
+            '</div>'
+        ).join('');
+    } catch (err) {
+        container.innerHTML = '<p style="color:red">Erro ao carregar o menu.</p>';
+    }
+}
+    </script>
 </body>
 </html>

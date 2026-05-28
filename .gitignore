@@ -1,4 +1,6 @@
 config.js
 server.js
+seed.js
+seed_pizaria.js
 node_modules/
 imagens/
