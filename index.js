@@ -79,21 +79,7 @@ function doLogin(event) {
     const email    = document.getElementById('email').value.trim();
     const password = document.getElementById('password').value;
 
-    // 1. Credenciais estáticas (config.js)
-    const staticUser = DEMO_USERS.find(u => u.email === email && u.password === password);
-    if (staticUser) {
-        loginSuccess({ name: staticUser.name, id: null });
-        return;
-    }
-
-    // 2. Utilizadores registados localmente
-    const localUser = getLocalUsers().find(u => u.email === email && u.password === password);
-    if (localUser) {
-        loginSuccess({ name: localUser.name, id: null });
-        return;
-    }
-
-    // 3. Backend
+    // 1. Backend
     showLoading('A entrar...');
     fetch(`${API_URL}/login`, {
         method: 'POST',
@@ -108,6 +94,11 @@ function doLogin(event) {
     })
     .catch(() => {
         hideLoading();
+        // 2. Offline — credenciais estáticas ou registadas localmente
+        const staticUser = DEMO_USERS.find(u => u.email === email && u.password === password);
+        if (staticUser) { loginSuccess({ name: staticUser.name, id: null }); return; }
+        const localUser = getLocalUsers().find(u => u.email === email && u.password === password);
+        if (localUser) { loginSuccess({ name: localUser.name, id: null }); return; }
         showError('loginError', 'Email ou palavra-passe incorretos.');
     });
 }
@@ -214,39 +205,102 @@ function showPage(pageId) {
 
 // As Minhas Reservas
 function loadMyReservations() {
-    const container = document.getElementById('myReservationsList');
     const session = getStudentSession();
-    const usedTokens = JSON.parse(localStorage.getItem('unifood_used_tokens') || '[]');
+    allMyUsedTokens = JSON.parse(localStorage.getItem('unifood_used_tokens') || '[]');
+    myResFilterStatus     = 'all';
+    myResFilterRestaurant = 'all';
 
-    // Tentar carregar da BD se tiver id real
     if (session?.id) {
         showLoading('A carregar reservas...');
         fetch(`${API_URL}/reservations/student/${session.id}`)
         .then(r => r.json())
         .then(data => {
             hideLoading();
-            renderMyReservations(container, data.map(r => ({
+            allMyReservations = data.map(r => ({
+                id: r.id,
                 token: r.qr_token,
                 restaurant: r.restaurant_nome || '—',
                 date: r.created_at,
-                status: r.status
-            })), usedTokens);
+                status: r.status,
+                rating: r.rating || null
+            }));
+            buildMyReservationFilters();
+            applyMyReservationFilters();
         })
         .catch(() => {
             hideLoading();
-            renderMyReservations(container, getLocalReservations(), usedTokens);
+            allMyReservations = getLocalReservations();
+            buildMyReservationFilters();
+            applyMyReservationFilters();
         });
     } else {
-        renderMyReservations(container, getLocalReservations(), usedTokens);
+        allMyReservations = getLocalReservations();
+        buildMyReservationFilters();
+        applyMyReservationFilters();
     }
+}
+
+function buildMyReservationFilters() {
+    const el = document.getElementById('myResFilters');
+    if (!el) return;
+
+    if (!allMyReservations.length) { el.innerHTML = ''; return; }
+
+    const statuses = [
+        { key: 'all',       label: 'Todas' },
+        { key: 'pending',   label: 'Pendente' },
+        { key: 'confirmed', label: 'Confirmada' },
+        { key: 'collected', label: 'Levantada' },
+        { key: 'cancelled', label: 'Cancelada' },
+    ];
+
+    const restaurants = ['all', ...new Set(
+        allMyReservations.map(r => r.restaurant).filter(r => r && r !== '—')
+    )];
+
+    const statusBtns = statuses.map(s => `
+        <button class="btn ${myResFilterStatus === s.key ? 'btn-primary' : 'btn-ghost'}"
+                style="padding:6px 14px;font-size:0.82rem"
+                onclick="myResFilterStatus='${s.key}';buildMyReservationFilters();applyMyReservationFilters()">
+            ${s.label}
+        </button>`).join('');
+
+    const restaurantOpts = restaurants.map(r =>
+        `<option value="${r}" ${myResFilterRestaurant === r ? 'selected' : ''}>${r === 'all' ? 'Todos os restaurantes' : r}</option>`
+    ).join('');
+
+    el.innerHTML = `
+        <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:10px">${statusBtns}</div>
+        <select style="padding:7px 12px;border:1px solid #ddd;border-radius:8px;font-size:0.85rem;color:#333;background:white;cursor:pointer"
+                onchange="myResFilterRestaurant=this.value;applyMyReservationFilters()">
+            ${restaurantOpts}
+        </select>`;
+}
+
+function applyMyReservationFilters() {
+    const container = document.getElementById('myReservationsList');
+    let filtered = allMyReservations;
+
+    if (myResFilterStatus !== 'all') {
+        filtered = filtered.filter(r => {
+            const status = r.status || (allMyUsedTokens.includes(r.token) ? 'collected' : 'pending');
+            return status === myResFilterStatus;
+        });
+    }
+    if (myResFilterRestaurant !== 'all') {
+        filtered = filtered.filter(r => r.restaurant === myResFilterRestaurant);
+    }
+
+    renderMyReservations(container, filtered, allMyUsedTokens);
 }
 
 function renderMyReservations(container, list, usedTokens) {
     if (!list.length) {
+        const hasReservations = allMyReservations.length > 0;
         container.innerHTML = `
             <div style="text-align:center;padding:40px;color:#6b6b6b">
                 <div style="font-size:2.5rem;margin-bottom:12px">🎫</div>
-                <p>Ainda não tem reservas.</p>
+                <p>${hasReservations ? 'Nenhuma reserva encontrada para este filtro.' : 'Ainda não tem reservas.'}</p>
             </div>`;
         return;
     }
@@ -268,6 +322,16 @@ function renderMyReservations(container, list, usedTokens) {
             </div>
             <div style="text-align:right">
                 <span style="font-size:0.78rem;font-weight:700;padding:4px 10px;border-radius:20px;background:${statusColor}22;color:${statusColor}">${statusLabel}</span>
+                ${status === 'collected' ? `
+                <div style="margin-top:8px">
+                    ${r.rating
+                        ? `<div style="font-size:0.75rem;color:#6b6b6b;margin-bottom:2px">A sua avaliação:</div>` +
+                          [1,2,3,4,5].map(n => `<span style="font-size:1.3rem;color:${n <= r.rating ? '#f59e0b' : '#d1d5db'}">★</span>`).join('')
+                        : r.id
+                            ? `<button class="btn btn-ghost" style="font-size:0.8rem;padding:5px 12px;margin-top:4px" onclick="openRatingModal('${r.token}',${r.id})">Avalie o pedido</button>`
+                            : ''
+                    }
+                </div>` : ''}
             </div>
         </div>`;
     }).join('');
@@ -288,6 +352,136 @@ function renderMyReservations(container, list, usedTokens) {
     });
 }
 
+
+let _ratingToken = null, _ratingId = null, _selectedRating = 0;
+
+function openRatingModal(token, id) {
+    _ratingToken = token;
+    _ratingId = id;
+    _selectedRating = 0;
+
+    document.getElementById('ratingStars').innerHTML = [1,2,3,4,5].map(n =>
+        `<span id="rstar-${n}" style="font-size:2.8rem;cursor:pointer;color:#d1d5db;transition:color 0.1s">★</span>`
+    ).join('');
+
+    [1,2,3,4,5].forEach(n => {
+        const s = document.getElementById(`rstar-${n}`);
+        s.addEventListener('mouseover', () => highlightStars(n));
+        s.addEventListener('mouseout',  () => highlightStars(_selectedRating));
+        s.addEventListener('click',     () => selectRating(n));
+    });
+
+    document.getElementById('ratingConfirmBtn').disabled = true;
+    document.getElementById('ratingModal').style.display = 'flex';
+}
+
+function closeRatingModal() {
+    document.getElementById('ratingModal').style.display = 'none';
+}
+
+function highlightStars(upTo) {
+    [1,2,3,4,5].forEach(n => {
+        const s = document.getElementById(`rstar-${n}`);
+        if (s) s.style.color = n <= upTo ? '#f59e0b' : '#d1d5db';
+    });
+}
+
+function selectRating(n) {
+    _selectedRating = n;
+    highlightStars(n);
+    document.getElementById('ratingConfirmBtn').disabled = false;
+}
+
+function confirmRating() {
+    if (!_selectedRating) return;
+    rateReservation(_ratingToken, _ratingId, _selectedRating);
+    closeRatingModal();
+}
+
+function rateReservation(token, id, rating) {
+    fetch(`${API_URL}/reservations/${id}/rating`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ rating })
+    })
+    .then(r => r.json())
+    .then(data => {
+        if (data.success) {
+            const r = allMyReservations.find(x => x.token === token);
+            if (r) { r.rating = rating; applyMyReservationFilters(); }
+        }
+    })
+    .catch(() => {
+        const r = allMyReservations.find(x => x.token === token);
+        if (r) { r.rating = rating; applyMyReservationFilters(); }
+    });
+}
+
+function loadMenuForReservation() {
+    const container = document.getElementById('menuItemsForReservation');
+    const restaurantId = RESTAURANT_IDS[selectedRestaurantName];
+    selectedMenuItem = null;
+
+    if (!restaurantId) {
+        container.innerHTML = '';
+        return;
+    }
+
+    container.innerHTML = '<p style="color:#6b6b6b;font-size:0.85rem">A carregar...</p>';
+
+    fetch(`${API_URL}/menu/${restaurantId}`)
+    .then(r => r.json())
+    .then(items => {
+        if (!items.length) { container.innerHTML = '<p style="color:#6b6b6b;font-size:0.85rem">Sem itens disponíveis.</p>'; return; }
+
+        const noneCard = `<div class="menu-item-option selected" data-id="" onclick="selectMenuItemForReservation(this,null)"
+            style="padding:10px 14px;border:1.5px solid var(--accent);border-radius:8px;cursor:pointer;margin-bottom:8px;background:var(--accent)08">
+            <span style="font-weight:600;font-size:0.9rem">Sem preferência</span>
+        </div>`;
+
+        const itemCards = items.map(item => `
+            <div class="menu-item-option" data-id="${item.id}"
+                 onclick="selectMenuItemForReservation(this,{id:${item.id},name:'${item.nome_menu.replace(/'/g,"\\'")}',price:${parseFloat(item.preco)}})"
+                 style="padding:10px 14px;border:1.5px solid #eee;border-radius:8px;cursor:pointer;margin-bottom:8px;display:flex;justify-content:space-between;align-items:center">
+                <div>
+                    <div style="font-weight:600;font-size:0.9rem">${item.nome_menu}</div>
+                    ${item.descricao ? `<div style="font-size:0.78rem;color:#6b6b6b">${item.descricao}</div>` : ''}
+                </div>
+                <span style="font-weight:700;color:var(--accent);white-space:nowrap;margin-left:12px">€${parseFloat(item.preco).toFixed(2)}</span>
+            </div>`).join('');
+
+        container.innerHTML = noneCard + itemCards;
+    })
+    .catch(() => { container.innerHTML = '<p style="color:#6b6b6b;font-size:0.85rem">Não foi possível carregar o menu.</p>'; });
+}
+
+function selectMenuItemForReservation(card, item) {
+    document.querySelectorAll('.menu-item-option').forEach(c => {
+        c.style.border = '1.5px solid #eee';
+        c.style.background = '';
+    });
+    card.style.border = '1.5px solid var(--accent)';
+    card.style.background = 'rgba(4,128,69,0.05)';
+    selectedMenuItem = item;
+}
+
+function updateReservationSummary() {
+    const modalLabel = selectedMealType === 'takeaway' ? 'Take-away' : selectedMealType === 'dinein' ? 'No local' : '—';
+    const itemLine = selectedMenuItem
+        ? `<div style="display:flex;justify-content:space-between;margin-top:6px">
+               <span>Item:</span><span style="font-weight:600">${selectedMenuItem.name}</span>
+           </div>
+           <div style="display:flex;justify-content:space-between;margin-top:8px;padding-top:8px;border-top:1px solid #eee">
+               <span style="font-weight:700">Total:</span>
+               <span style="font-weight:700;font-size:1.1rem;color:var(--accent)">€${selectedMenuItem.price.toFixed(2)}</span>
+           </div>`
+        : `<div style="margin-top:6px;color:#6b6b6b">Item: Sem preferência</div>`;
+
+    document.getElementById('reservationSummary').innerHTML = `
+        <div style="display:flex;justify-content:space-between"><span>Restaurante:</span><span style="font-weight:600">${selectedRestaurantName}</span></div>
+        <div style="display:flex;justify-content:space-between;margin-top:6px"><span>Modalidade:</span><span style="font-weight:600">${modalLabel}</span></div>
+        ${itemLine}`;
+}
 
 function showReservationPage(restaurantName = null) {
     showPage('reservationPage');
@@ -315,6 +509,14 @@ function showMenuPage() {
 // Estado da reserva atual
 let currentReservation = null;
 let selectedRestaurantName = null;
+let selectedMealType = null;
+let selectedMenuItem = null; // { id, name, price } ou null
+
+// Estado dos filtros de "As Minhas Reservas"
+let allMyReservations = [];
+let allMyUsedTokens   = [];
+let myResFilterStatus     = 'all';
+let myResFilterRestaurant = 'all';
 
 function selectRestaurant(card, name) {
     document.querySelectorAll('.restaurant-select-card').forEach(c => c.classList.remove('selected'));
@@ -330,6 +532,14 @@ function nextStep(stepNumber) {
     }
     if (stepNumber === 2) {
         document.getElementById('selectedRestaurantLabel').textContent = '📍 ' + selectedRestaurantName;
+        loadMenuForReservation();
+    }
+    if (stepNumber === 3 && !selectedMealType) {
+        alert('Por favor selecione a modalidade da refeição.');
+        return;
+    }
+    if (stepNumber === 3) {
+        updateReservationSummary();
     }
     if (stepNumber === 4) {
         createReservationAndShowQR();
@@ -357,7 +567,7 @@ function createReservationAndShowQR() {
         hideLoading();
         const token = generateLocalToken();
         saveLocalToken(token);
-        saveLocalReservation({ token, restaurant: selectedRestaurantName, date: new Date().toISOString() });
+        saveLocalReservation({ token, restaurant: selectedRestaurantName, modalidade: selectedMealType, date: new Date().toISOString() });
         showQRStep(token);
         return;
     }
@@ -365,7 +575,7 @@ function createReservationAndShowQR() {
     fetch(`${API_URL}/reservations`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ student_id, restaurant_id, menu_id: null })
+        body: JSON.stringify({ student_id, restaurant_id, menu_id: selectedMenuItem?.id || null, modalidade: selectedMealType })
     })
     .then(r => r.json())
     .then(data => {
@@ -423,7 +633,7 @@ function downloadQR() {
 
 function prevStep(n) { goToStep(n); }
 
-function resetReservationSteps() { goToStep(1); }
+function resetReservationSteps() { selectedMealType = null; selectedMenuItem = null; goToStep(1); }
 document.addEventListener('DOMContentLoaded', function () {
     // Restaurar sessão
     const savedSession = localStorage.getItem('unifood_student');
@@ -448,6 +658,7 @@ document.addEventListener('DOMContentLoaded', function () {
         option.addEventListener('click', function () {
             document.querySelectorAll('.meal-option').forEach(opt => opt.classList.remove('selected'));
             this.classList.add('selected');
+            selectedMealType = this.dataset.type;
         });
     });
 

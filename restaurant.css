@@ -178,8 +178,9 @@ body {
 }
 
 .sidebar-logo .brand {
-    font-family: 'DM Serif Display', serif;
-    font-size: 1.6rem;
+    font-family: 'DM Sans', sans-serif;
+    font-size: 1.5rem;
+    font-weight: 700;
     color: var(--accent);
     display: block;
 }

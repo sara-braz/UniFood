@@ -60,22 +60,8 @@ function doLogin(event) {
     const email = document.getElementById('loginEmail').value.trim();
     const pass  = document.getElementById('loginPassword').value;
 
-    // 1. Credenciais estáticas (config.js — fallback offline)
-    const staticUser = DEMO_RESTAURANTS.find(u => u.email === email && u.password === pass);
-    if (staticUser) {
-        loginSuccess({ nome_comercial: staticUser.name, email, id: null });
-        return;
-    }
-
-    // 2. Restaurantes registados localmente
-    const localUser = getLocalRestaurants().find(u => u.email === email && u.password === pass);
-    if (localUser) {
-        loginSuccess({ nome_comercial: localUser.name, email, id: null });
-        return;
-    }
-
-    // 3. Backend
-    showLoading('A entrar…');
+    // 1. Backend
+    showLoading('A entrar...');
     fetch(`${API_URL}/login`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -102,6 +88,11 @@ function doLogin(event) {
     })
     .catch(() => {
         hideLoading();
+        // 2. Offline — credenciais estáticas ou registadas localmente
+        const staticUser = DEMO_RESTAURANTS.find(u => u.email === email && u.password === pass);
+        if (staticUser) { loginSuccess({ nome_comercial: staticUser.name, email, id: null }); return; }
+        const localUser = getLocalRestaurants().find(u => u.email === email && u.password === pass);
+        if (localUser) { loginSuccess({ nome_comercial: localUser.name, email, id: null }); return; }
         showError('loginError', 'Sem ligação ao servidor.');
     });
 }
@@ -230,9 +221,11 @@ async function loadReservations() {
             qr: r.qr_token,
             student: r.student_name || r.student_email || '—',
             item: r.nome_menu || '—',
+            modalidade: r.modalidade || null,
             date: r.created_at,
-            time: new Date(r.created_at).toLocaleTimeString('pt-PT', { hour: '2-digit', minute: '2-digit' }),
-            status: r.status
+            time: new Date(r.created_at).toLocaleDateString('pt-PT', { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit' }),
+            status: r.status,
+            rating: r.rating || null
         }));
     } catch {
         reservations = [];
@@ -243,13 +236,22 @@ async function loadReservations() {
 // ESTATÍSTICAS
 function updateStats() {
     document.getElementById('statTotal').textContent = reservations.length;
+    const today = new Date();
     document.getElementById('statToday').textContent = reservations.filter(r => {
-        // contar só reservas de hoje
-        return true; // simplificado — BD não guarda hora separada
+        const d = new Date(r.date);
+        return d.getFullYear() === today.getFullYear() &&
+               d.getMonth()    === today.getMonth()    &&
+               d.getDate()     === today.getDate();
     }).length;
     document.getElementById('statConfirmed').textContent = reservations.filter(r => r.status === 'confirmed').length;
     document.getElementById('statPending').textContent = reservations.filter(r => r.status === 'pending').length;
     document.getElementById('statItems').textContent = menuItems.length;
+
+    const rated = reservations.filter(r => r.rating);
+    const avg = rated.length
+        ? (rated.reduce((s, r) => s + r.rating, 0) / rated.length).toFixed(1)
+        : '—';
+    document.getElementById('statRating').textContent = avg;
 }
 
 function renderBarChart() {
@@ -372,12 +374,15 @@ function renderReservations() {
                 <td><strong>${r.qr || r.id}</strong></td>
                 <td>${r.student}</td>
                 <td>${r.item}</td>
-                <td>—</td>
+                <td>${r.modalidade === 'takeaway' ? 'Take-away' : r.modalidade === 'dinein' ? 'No local' : '—'}</td>
                 <td>${r.time}</td>
                 <td><span class="badge ${statusBadge[r.status] || ''}">${statusLabel[r.status] || r.status}</span></td>
                 <td>
-                    ${r.status === 'pending' ? `<button class="btn btn-sm btn-primary" onclick="confirmReservation(${r.id})">Confirmar</button>` : ''}
-                    ${r.status === 'confirmed' ? `<button class="btn btn-sm btn-ghost" onclick="markCollected(${r.id})">Levantada</button>` : ''}
+                    <div style="display:flex;gap:6px;flex-wrap:wrap;align-items:center">
+                        ${r.status === 'pending' ? `<button class="btn btn-sm btn-primary" onclick="confirmReservation(${r.id})">Confirmar</button>` : ''}
+                        ${r.status === 'pending' ? `<button class="btn btn-sm btn-danger" onclick="cancelReservation(${r.id})">Cancelar</button>` : ''}
+                        ${r.status === 'confirmed' ? `<button class="btn btn-sm btn-ghost" onclick="markCollected(${r.id})">Levantada</button>` : ''}
+                    </div>
                 </td>
             </tr>
         `).join('')
@@ -403,6 +408,28 @@ function confirmReservation(id) {
         // fallback offline
         const r = reservations.find(x => x.id === id);
         if (r) { r.status = 'confirmed'; renderReservations(); updateStats(); }
+    });
+}
+
+function cancelReservation(id) {
+    if (!confirm('Cancelar esta reserva?')) return;
+    fetch(`${API_URL}/reservations/${id}/status`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ status: 'cancelled' })
+    })
+    .then(r => r.json())
+    .then(data => {
+        if (data.success) {
+            const r = reservations.find(x => x.id === id);
+            if (r) r.status = 'cancelled';
+            renderReservations();
+            updateStats();
+        }
+    })
+    .catch(() => {
+        const r = reservations.find(x => x.id === id);
+        if (r) { r.status = 'cancelled'; renderReservations(); updateStats(); }
     });
 }
 
@@ -486,7 +513,13 @@ function saveMenuItem() {
     }
 
     if (editingItemId) {
-        // Editar
+        // modo demo (sem id real) — atualizar só localmente
+        if (!currentRestaurant.id) {
+            const item = menuItems.find(m => m.id === editingItemId);
+            if (item) { item.name = nome_menu; item.desc = descricao; item.price = preco; }
+            closeMenuModal(); renderMenu(); updateStats();
+            return;
+        }
         fetch(`${API_URL}/menu/${editingItemId}`, {
             method: 'PUT',
             headers: { 'Content-Type': 'application/json' },
@@ -503,13 +536,17 @@ function saveMenuItem() {
             }
         })
         .catch(() => {
-            // fallback offline
             const item = menuItems.find(m => m.id === editingItemId);
             if (item) { item.name = nome_menu; item.desc = descricao; item.price = preco; }
             closeMenuModal(); renderMenu(); updateStats();
         });
     } else {
-        // Adicionar
+        // modo demo (sem id real) — adicionar só localmente
+        if (!currentRestaurant.id) {
+            menuItems.push({ id: Date.now(), name: nome_menu, desc: descricao, price: preco, category: 'prato' });
+            closeMenuModal(); renderMenu(); updateStats();
+            return;
+        }
         fetch(`${API_URL}/menu`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
