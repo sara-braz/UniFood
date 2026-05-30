@@ -110,7 +110,7 @@ Todos os endpoints devolvem JSON. A base URL é `http://localhost:3000`.
 
 `Pendente` -- `Confirmada` -- `Levantada` -- `Cancelada`
 
-Apenas reservas com estado `pending` podem ser canceladas pelo estudante.
+Apenas reservas com estado `Pendente` podem ser canceladas pelo estudante.
 
 ---
 
