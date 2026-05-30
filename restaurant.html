@@ -86,6 +86,9 @@
         <div class="nav-item" onclick="showTab('menuPage', this)">
             <span class="nav-icon">🍽️</span> Gerir Menu
         </div>
+        <div class="nav-item" onclick="showTab('settingsPage', this)">
+            <span class="nav-icon">⚙️</span> Definições
+        </div>
     </nav>
     <div class="sidebar-footer">
         <div class="restaurant-info-mini">
@@ -215,6 +218,39 @@
                         </thead>
                         <tbody id="reservationsBody"></tbody>
                     </table>
+                </div>
+            </div>
+        </div>
+
+        <!-- SETTINGS PAGE -->
+        <div id="settingsPage" class="page">
+            <div class="card" style="max-width:560px">
+                <div class="card-header">
+                    <span class="card-title">Perfil do Restaurante</span>
+                </div>
+                <div style="padding:8px 0">
+                    <div class="form-group">
+                        <label>Nome comercial</label>
+                        <input type="text" id="settingName" placeholder="Ex: Cantina Central">
+                    </div>
+                    <div class="form-group">
+                        <label>Descrição</label>
+                        <input type="text" id="settingDesc" placeholder="Ex: Comida caseira e saudável">
+                    </div>
+                    <div class="form-group">
+                        <label>Localização</label>
+                        <input type="text" id="settingLocation" placeholder="Ex: Edifício A, Piso 0">
+                    </div>
+                    <div class="form-group">
+                        <label>Contacto</label>
+                        <input type="text" id="settingContact" placeholder="Ex: 217 123 456">
+                    </div>
+                    <div class="form-group">
+                        <label>Horário</label>
+                        <input type="text" id="settingHours" placeholder="Ex: Seg-Sex 08h00-20h00">
+                    </div>
+                    <p id="settingsFeedback" style="font-size:0.85rem;margin:8px 0 12px;min-height:1.2em"></p>
+                    <button class="btn btn-primary" onclick="saveRestaurantSettings()">Guardar alterações</button>
                 </div>
             </div>
         </div>

@@ -9,6 +9,16 @@ const RESTAURANT_IDS = {
     'O Melhor Croissant da Minha Rua': 7
 };
 
+const IMG_BASE = 'https://raw.githubusercontent.com/sara-braz/UniFood/refs/heads/site-final/imagens/';
+const RESTAURANT_IMAGES = {
+    2: 'Pizaria_Mercado.jpeg',
+    3: 'Pastelaria_Monserrate.jpeg',
+    4: 'Tulipa.jpeg',
+    5: 'caralhinho.jpeg',
+    6: 'Monkys.jpeg',
+    7: 'OMCDMR.jpeg'
+};
+
 // Auth tab switch
 function switchTab(tab) {
     document.querySelectorAll('.auth-tab').forEach((t, i) => {
@@ -109,6 +119,43 @@ function loginSuccess(user) {
     document.getElementById('userAvatar').textContent = user.name.charAt(0).toUpperCase();
     document.getElementById('userInfo').style.display = 'flex';
     showPage('mainMenuPage');
+    loadRestaurants();
+}
+
+async function loadRestaurants() {
+    const grid = document.getElementById('restaurantsGrid');
+    if (!grid) return;
+
+    function renderCard(name, id, horario, localizacao) {
+        const img  = RESTAURANT_IMAGES[id] ? `${IMG_BASE}${RESTAURANT_IMAGES[id]}` : '';
+        const safe = name.replace(/'/g, "\\'");
+        return `
+        <div class="restaurant-card">
+            <div class="restaurant-image"><img src="${img}" alt="${name}"></div>
+            <div class="restaurant-info">
+                <h3>${name}</h3>
+                ${horario    ? `<p class="restaurant-detail">Horário: ${horario}</p>` : ''}
+                ${localizacao ? `<p class="restaurant-detail">Localização: ${localizacao}</p>` : ''}
+                <div class="restaurant-buttons">
+                    <button class="btn btn-primary reserve-btn" onclick="showReservationPage('${safe}')">Fazer Reserva</button>
+                    <button class="btn btn-primary reserve-btn" onclick="showMenuPage(${id},'${safe}')">Menu</button>
+                </div>
+            </div>
+        </div>`;
+    }
+
+    try {
+        const res  = await fetch(`${API_URL}/restaurants`);
+        const data = await res.json();
+        data.forEach(r => { RESTAURANT_IDS[r.nome_comercial] = r.id; });
+        grid.innerHTML = data.map(r =>
+            renderCard(r.nome_comercial, r.id, r.horario, r.localizacao)
+        ).join('');
+    } catch {
+        grid.innerHTML = Object.entries(RESTAURANT_IDS).map(([name, id]) =>
+            renderCard(name, id, '', '')
+        ).join('');
+    }
 }
 
 function getStudentSession() {
@@ -322,6 +369,7 @@ function renderMyReservations(container, list, usedTokens) {
             </div>
             <div style="text-align:right">
                 <span style="font-size:0.78rem;font-weight:700;padding:4px 10px;border-radius:20px;background:${statusColor}22;color:${statusColor}">${statusLabel}</span>
+                ${status === 'pending' ? `<div style="margin-top:8px"><button class="btn btn-ghost" style="font-size:0.8rem;padding:5px 12px;color:#dc2626;border-color:#dc2626" onclick="cancelMyReservation(${r.id})">Cancelar</button></div>` : ''}
                 ${status === 'collected' ? `
                 <div style="margin-top:8px">
                     ${r.rating
@@ -352,6 +400,27 @@ function renderMyReservations(container, list, usedTokens) {
     });
 }
 
+
+async function cancelMyReservation(id) {
+    if (!confirm('Tens a certeza que queres cancelar esta reserva?')) return;
+    const session = getStudentSession();
+    if (!session || !session.id) {
+        const r = allMyReservations.find(r => r.id === id);
+        if (r) r.status = 'cancelled';
+        applyMyReservationFilters();
+        return;
+    }
+    try {
+        const res = await fetch(`${API_URL}/reservations/${id}/status`, {
+            method: 'PUT',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ status: 'cancelled' })
+        });
+        if (res.ok) loadMyReservations();
+    } catch {
+        alert('Sem ligação ao servidor.');
+    }
+}
 
 let _ratingToken = null, _ratingId = null, _selectedRating = 0;
 

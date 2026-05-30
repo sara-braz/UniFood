@@ -163,7 +163,7 @@ function showTab(pageId, navEl) {
     document.getElementById(pageId).classList.add('active');
     document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
     if (navEl) navEl.classList.add('active');
-    const titles = { statsPage: 'Estatísticas', reservationsPage: 'Reservas', menuPage: 'Gerir Menu' };
+    const titles = { statsPage: 'Estatísticas', reservationsPage: 'Reservas', menuPage: 'Gerir Menu', settingsPage: 'Definições' };
     document.getElementById('topbarTitle').textContent = titles[pageId] || '';
 }
 
@@ -181,6 +181,65 @@ async function initDashboard() {
     renderDonutChart();
     updateStats();
     renderTopItems();
+    loadSettings();
+}
+
+// DEFINIÇÕES DO RESTAURANTE
+function loadSettings() {
+    if (!currentRestaurant) return;
+    const fields = {
+        settingName:     'nome_comercial',
+        settingDesc:     'descricao',
+        settingLocation: 'localizacao',
+        settingContact:  'contacto',
+        settingHours:    'horario'
+    };
+    for (const [elId, key] of Object.entries(fields)) {
+        const el = document.getElementById(elId);
+        if (el) el.value = currentRestaurant[key] || '';
+    }
+}
+
+async function saveRestaurantSettings() {
+    const body = {
+        nome_comercial: document.getElementById('settingName').value.trim(),
+        descricao:      document.getElementById('settingDesc').value.trim(),
+        localizacao:    document.getElementById('settingLocation').value.trim(),
+        contacto:       document.getElementById('settingContact').value.trim(),
+        horario:        document.getElementById('settingHours').value.trim(),
+    };
+    const fb = document.getElementById('settingsFeedback');
+
+    if (!currentRestaurant.id) {
+        Object.assign(currentRestaurant, body);
+        localStorage.setItem('unifood_restaurant', JSON.stringify(currentRestaurant));
+        document.getElementById('sidebarName').textContent = body.nome_comercial;
+        fb.style.color = '#048045';
+        fb.textContent = 'Alterações guardadas (modo demo).';
+        return;
+    }
+
+    try {
+        const res = await fetch(`${API_URL}/restaurants/${currentRestaurant.id}`, {
+            method: 'PUT',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(body)
+        });
+        const data = await res.json();
+        if (data.success) {
+            Object.assign(currentRestaurant, body);
+            localStorage.setItem('unifood_restaurant', JSON.stringify(currentRestaurant));
+            document.getElementById('sidebarName').textContent = body.nome_comercial;
+            fb.style.color = '#048045';
+            fb.textContent = 'Alterações guardadas com sucesso.';
+        } else {
+            fb.style.color = '#dc2626';
+            fb.textContent = data.message || 'Erro ao guardar.';
+        }
+    } catch {
+        fb.style.color = '#dc2626';
+        fb.textContent = 'Sem ligação ao servidor.';
+    }
 }
 
 // CARREGAR DADOS DA API
