@@ -4,7 +4,6 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>UniFood — Painel do Restaurante</title>
-    <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600;700&family=DM+Serif+Display&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="restaurant.css">
 </head>
 <body>
@@ -312,15 +311,34 @@
 <div class="modal-overlay" id="qrModal">
     <div class="modal">
         <h2>Validar QR Code</h2>
-        <p style="color:var(--muted);font-size:0.9rem;margin-bottom:20px">Insira o código da senha do estudante para marcar a reserva como levantada.</p>
-        <div class="form-group">
-            <label>Código da senha</label>
-            <input type="text" id="qrTokenInput" placeholder="Ex: A5B2C9" style="text-transform:uppercase; letter-spacing:0.1em; font-size:1.1rem; font-weight:600;">
+
+        <div class="qr-mode-tabs">
+            <button id="tabType" class="qr-mode-tab active" onclick="setQRMode('type')">Escrever código</button>
+            <button id="tabScan" class="qr-mode-tab" onclick="setQRMode('scan')">Digitalizar</button>
         </div>
-        <div id="qrValidateResult" class="error-msg"></div>
-        <div class="modal-footer">
-            <button class="btn btn-ghost" onclick="closeQRModal()">Cancelar</button>
-            <button class="btn btn-primary" onclick="validateQR()">Validar</button>
+
+        <!-- Modo: escrever -->
+        <div id="qrTypeMode">
+            <p style="color:var(--muted);font-size:0.9rem;margin-bottom:20px">Insira o código da senha do estudante para marcar a reserva como levantada.</p>
+            <div class="form-group">
+                <label>Código da senha</label>
+                <input type="text" id="qrTokenInput" placeholder="Ex: A5B2C9" style="text-transform:uppercase;letter-spacing:0.1em;font-size:1.1rem;font-weight:600;">
+            </div>
+            <div id="qrValidateResult" class="error-msg"></div>
+            <div class="modal-footer">
+                <button class="btn btn-ghost" onclick="closeQRModal()">Cancelar</button>
+                <button class="btn btn-primary" onclick="validateQR()">Validar</button>
+            </div>
+        </div>
+
+        <!-- Modo: câmara -->
+        <div id="qrScanMode" style="display:none">
+            <p style="color:var(--muted);font-size:0.9rem;margin-bottom:16px">Aponte a câmara para o QR Code da senha do estudante.</p>
+            <div id="qrReader"></div>
+            <div id="qrScanResult" class="error-msg" style="margin-top:12px"></div>
+            <div class="modal-footer">
+                <button class="btn btn-ghost" onclick="closeQRModal()">Cancelar</button>
+            </div>
         </div>
     </div>
 </div>
@@ -332,6 +350,7 @@
 </div>
 
 <script src="config.js"></script>
+<script src="/node_modules/html5-qrcode/html5-qrcode.min.js"></script>
 <script src="restaurant.js"></script>
 </body>
 </html>

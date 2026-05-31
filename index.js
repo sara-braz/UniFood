@@ -361,7 +361,7 @@ function renderMyReservations(container, list, usedTokens) {
 
         return `
         <div style="background:white;border:1px solid #eee;border-radius:12px;padding:20px;margin-bottom:14px;display:flex;align-items:center;gap:20px;flex-wrap:wrap">
-            <div id="qr-mini-${r.token}" style="flex-shrink:0"></div>
+            <div id="qr-mini-${r.token}" style="flex-shrink:0;cursor:pointer;border-radius:6px" title="Clique para ampliar" onclick="openQRExpand('${r.token}')"></div>
             <div style="flex:1;min-width:160px">
                 <div style="font-weight:700;font-size:1rem;color:#111;margin-bottom:4px">${r.restaurant || '—'}</div>
                 <div style="font-size:0.82rem;color:#6b6b6b;margin-bottom:6px">${date}</div>
@@ -387,16 +387,7 @@ function renderMyReservations(container, list, usedTokens) {
     // Gerar QR miniatura para cada reserva
     list.forEach(r => {
         const el = document.getElementById(`qr-mini-${r.token}`);
-        if (el) {
-            new QRCode(el, {
-                text: r.token,
-                width: 70,
-                height: 70,
-                colorDark: '#048045',
-                colorLight: '#ffffff',
-                correctLevel: QRCode.CorrectLevel.M
-            });
-        }
+        if (el) el.innerHTML = `<img src="https://api.qrserver.com/v1/create-qr-code/?data=${encodeURIComponent(r.token)}&size=70x70&ecc=M&margin=1" style="width:70px;height:70px;display:block" alt="QR">`;
     });
 }
 
@@ -675,29 +666,37 @@ function generateLocalToken() {
 function showQRStep(token) {
     currentReservation = { token };
     document.getElementById('qrTokenDisplay').textContent = token;
-
-    // Limpar e gerar QR
     const container = document.getElementById('qrCodeContainer');
-    container.innerHTML = '';
-    new QRCode(container, {
-        text: token,
-        width: 180,
-        height: 180,
-        colorDark: '#048045',
-        colorLight: '#ffffff',
-        correctLevel: QRCode.CorrectLevel.H
-    });
-
+    container.innerHTML = `<img src="https://api.qrserver.com/v1/create-qr-code/?data=${encodeURIComponent(token)}&size=180x180&ecc=H&margin=2" style="width:180px;height:180px;display:block" alt="QR Code">`;
     goToStep(4);
 }
 
-function downloadQR() {
-    const canvas = document.querySelector('#qrCodeContainer canvas');
-    if (!canvas) return;
-    const link = document.createElement('a');
-    link.download = `unifood-reserva-${currentReservation?.token || 'qr'}.png`;
-    link.href = canvas.toDataURL();
-    link.click();
+function openQRExpand(token) {
+    const codeEl = document.getElementById('qrExpandCode');
+    codeEl.innerHTML = `<img src="https://api.qrserver.com/v1/create-qr-code/?data=${encodeURIComponent(token)}&size=240x240&ecc=H&margin=2" style="width:240px;height:240px;display:block" alt="QR Code">`;
+    document.getElementById('qrExpandToken').textContent = 'Senha: ' + token;
+    document.getElementById('qrExpandOverlay').style.display = 'flex';
+}
+
+function closeQRExpand() {
+    document.getElementById('qrExpandOverlay').style.display = 'none';
+    document.getElementById('qrExpandCode').innerHTML = '';
+}
+
+async function downloadQR() {
+    const token = currentReservation?.token;
+    if (!token) return;
+    const url = `https://api.qrserver.com/v1/create-qr-code/?data=${encodeURIComponent(token)}&size=300x300&ecc=H&margin=2`;
+    try {
+        const res = await fetch(url);
+        const blob = await res.blob();
+        const link = document.createElement('a');
+        link.download = `unifood-reserva-${token}.png`;
+        link.href = URL.createObjectURL(blob);
+        link.click();
+    } catch {
+        window.open(url, '_blank');
+    }
 }
 
 function prevStep(n) { goToStep(n); }

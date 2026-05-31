@@ -325,7 +325,6 @@
         <div class="loading-text" id="loadingText">A processar…</div>
     </div>
 
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
     <script src="config.js"></script>
     <script src="index.js"></script>
     <script>
@@ -353,5 +352,13 @@ async function showMenuPage(restaurantId, restaurantName) {
     }
 }
     </script>
+
+    <div id="qrExpandOverlay" onclick="closeQRExpand()" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.75);z-index:9999;align-items:center;justify-content:center">
+        <div style="background:white;padding:28px;border-radius:16px;text-align:center;box-shadow:0 20px 50px rgba(0,0,0,0.3)" onclick="event.stopPropagation()">
+            <div id="qrExpandCode"></div>
+            <p id="qrExpandToken" style="margin-top:14px;font-size:1rem;font-weight:700;letter-spacing:0.1em;color:#333"></p>
+            <button onclick="closeQRExpand()" style="margin-top:14px;padding:8px 20px;border:1.5px solid #eee;border-radius:8px;background:none;cursor:pointer;font-family:inherit;font-size:0.9rem;color:#6b6b6b">Fechar</button>
+        </div>
+    </div>
 </body>
 </html>

@@ -4,6 +4,7 @@ let editingItemId = null;
 let activeReservationFilter = 'all';
 let menuItems = [];
 let reservations = [];
+let html5QrCode = null;
 const API_URL = API;
 
 const weekDays = ['Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sáb', 'Dom'];
@@ -655,23 +656,63 @@ function deleteMenuItem(id) {
 // QR CODE VALIDATION
 function openQRModal() {
     document.getElementById('qrTokenInput').value = '';
-    const result = document.getElementById('qrValidateResult');
-    result.textContent = '';
-    result.classList.remove('visible');
-    result.style.background = '';
-    result.style.color = '';
-    result.style.borderColor = '';
+    ['qrValidateResult', 'qrScanResult'].forEach(id => {
+        const el = document.getElementById(id);
+        el.textContent = '';
+        el.classList.remove('visible');
+        el.style.background = el.style.color = el.style.borderColor = '';
+    });
+    setQRMode('type');
     document.getElementById('qrModal').classList.add('open');
     setTimeout(() => document.getElementById('qrTokenInput').focus(), 100);
 }
 
 function closeQRModal() {
+    stopQRScan();
     document.getElementById('qrModal').classList.remove('open');
 }
 
-function validateQR() {
+function setQRMode(mode) {
+    document.getElementById('tabType').classList.toggle('active', mode === 'type');
+    document.getElementById('tabScan').classList.toggle('active', mode === 'scan');
+    document.getElementById('qrTypeMode').style.display = mode === 'type' ? '' : 'none';
+    document.getElementById('qrScanMode').style.display = mode === 'scan' ? '' : 'none';
+    if (mode === 'scan') startQRScan();
+    else stopQRScan();
+}
+
+function startQRScan() {
+    const scanResult = document.getElementById('qrScanResult');
+    scanResult.textContent = '';
+    scanResult.classList.remove('visible');
+
+    html5QrCode = new Html5Qrcode('qrReader');
+    html5QrCode.start(
+        { facingMode: 'environment' },
+        { fps: 10, qrbox: { width: 250, height: 250 } },
+        (decodedText) => {
+            stopQRScan();
+            document.getElementById('qrTokenInput').value = decodedText;
+            validateQR(document.getElementById('qrScanResult'));
+        },
+        () => {}
+    ).catch(() => {
+        setQRResult(scanResult, '❌ Não foi possível aceder à câmara.', false);
+        html5QrCode = null;
+    });
+}
+
+function stopQRScan() {
+    if (html5QrCode) {
+        const qr = html5QrCode;
+        html5QrCode = null;
+        qr.stop().catch(() => {});
+    }
+}
+
+function validateQR(resultElOverride) {
     const token = document.getElementById('qrTokenInput').value.trim().toUpperCase();
-    const resultEl = document.getElementById('qrValidateResult');
+    const resultEl = resultElOverride || document.getElementById('qrValidateResult');
 
     if (!token) {
         setQRResult(resultEl, '❌ Insira um código.', false);

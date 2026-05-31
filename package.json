@@ -1,9 +1,12 @@
 {
   "dependencies": {
+    "bcryptjs": "^3.0.3",
     "body-parser": "^2.2.2",
     "cors": "^2.8.6",
     "express": "^5.2.1",
+    "html5-qrcode": "^2.3.8",
     "mysql2": "^3.22.3",
-    "pg": "^8.21.0"
+    "pg": "^8.21.0",
+    "qrcode": "^1.5.4"
   }
 }

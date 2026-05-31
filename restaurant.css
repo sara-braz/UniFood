@@ -17,7 +17,7 @@
 * { margin: 0; padding: 0; box-sizing: border-box; }
 
 body {
-    font-family: 'DM Sans', sans-serif;
+    font-family: Inter, system-ui, -apple-system, Helvetica, Arial, sans-serif;
     background: var(--bg);
     color: var(--text);
     display: flex;
@@ -45,7 +45,8 @@ body {
 }
 
 .auth-logo {
-    font-family: 'DM Serif Display', serif;
+    font-family: Inter, system-ui, -apple-system, Helvetica, Arial, sans-serif;
+    font-weight: 700;
     font-size: 2rem;
     color: var(--accent);
     text-align: center;
@@ -105,7 +106,7 @@ body {
     border: 1.5px solid var(--border);
     border-radius: 9px;
     font-size: 0.95rem;
-    font-family: 'DM Sans', sans-serif;
+    font-family: Inter, system-ui, -apple-system, Helvetica, Arial, sans-serif;
     color: var(--text);
     transition: border-color 0.2s;
     background: white;
@@ -126,7 +127,7 @@ body {
     border-radius: 10px;
     font-size: 1rem;
     font-weight: 600;
-    font-family: 'DM Sans', sans-serif;
+    font-family: Inter, system-ui, -apple-system, Helvetica, Arial, sans-serif;
     cursor: pointer;
     transition: background 0.2s, transform 0.1s;
 }
@@ -178,7 +179,7 @@ body {
 }
 
 .sidebar-logo .brand {
-    font-family: 'DM Sans', sans-serif;
+    font-family: Inter, system-ui, -apple-system, Helvetica, Arial, sans-serif;
     font-size: 1.5rem;
     font-weight: 700;
     color: var(--accent);
@@ -263,7 +264,7 @@ body {
     border-radius: 8px;
     color: var(--muted);
     font-size: 0.85rem;
-    font-family: 'DM Sans', sans-serif;
+    font-family: Inter, system-ui, -apple-system, Helvetica, Arial, sans-serif;
     cursor: pointer;
     transition: all 0.2s;
 }
@@ -536,7 +537,7 @@ tbody tr:hover td { background: var(--bg); }
     font-weight: 600;
     cursor: pointer;
     border: none;
-    font-family: 'DM Sans', sans-serif;
+    font-family: Inter, system-ui, -apple-system, Helvetica, Arial, sans-serif;
     transition: all 0.2s;
 }
 
@@ -664,7 +665,7 @@ tbody tr:hover td { background: var(--bg); }
     font-weight: 600;
     cursor: pointer;
     color: var(--muted);
-    font-family: 'DM Sans', sans-serif;
+    font-family: Inter, system-ui, -apple-system, Helvetica, Arial, sans-serif;
     transition: all 0.2s;
 }
 
@@ -689,7 +690,7 @@ tbody tr:hover td { background: var(--bg); }
 .search-bar input {
     border: none;
     outline: none;
-    font-family: 'DM Sans', sans-serif;
+    font-family: Inter, system-ui, -apple-system, Helvetica, Arial, sans-serif;
     font-size: 0.9rem;
     flex: 1;
     color: var(--text);
@@ -763,4 +764,44 @@ tbody tr:hover td { background: var(--bg); }
     font-size: 0.9rem;
     color: #6b7280;
     font-weight: 500;
+}
+
+/* QR mode tabs */
+.qr-mode-tabs {
+    display: flex;
+    background: var(--bg);
+    border-radius: 10px;
+    padding: 4px;
+    margin-bottom: 20px;
+    gap: 4px;
+}
+
+.qr-mode-tab {
+    flex: 1;
+    padding: 8px;
+    border: none;
+    border-radius: 7px;
+    cursor: pointer;
+    font-weight: 500;
+    font-size: 0.875rem;
+    font-family: inherit;
+    color: var(--muted);
+    background: none;
+    transition: all 0.2s;
+}
+
+.qr-mode-tab.active {
+    background: white;
+    color: var(--accent);
+    box-shadow: 0 1px 4px rgba(0,0,0,0.1);
+}
+
+#qrReader {
+    width: 100%;
+    border-radius: 10px;
+    overflow: hidden;
+}
+
+#qrReader video {
+    border-radius: 10px;
 }
