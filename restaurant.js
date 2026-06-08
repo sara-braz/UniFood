@@ -1,3 +1,10 @@
+function fetchWithTimeout(url, options = {}, ms = 5000) {
+    const ctrl = new AbortController();
+    const timer = setTimeout(() => ctrl.abort(), ms);
+    return fetch(url, { ...options, signal: ctrl.signal })
+        .finally(() => clearTimeout(timer));
+}
+
 // STATE
 let currentRestaurant = null;  // { id, nome_comercial, user_id, ... }
 let editingItemId = null;
@@ -63,7 +70,7 @@ function doLogin(event) {
 
     // 1. Backend
     showLoading('A entrar...');
-    fetch(`${API_URL}/login`, {
+    fetchWithTimeout(`${API_URL}/login`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ email, password: pass, role: 'restaurant' })
@@ -76,7 +83,7 @@ function doLogin(event) {
             return;
         }
         const user = data.user;
-        return fetch(`${API_URL}/restaurants/user/${user.id}`)
+        return fetchWithTimeout(`${API_URL}/restaurants/user/${user.id}`)
             .then(r => r.json())
             .then(rData => {
                 hideLoading();
@@ -126,7 +133,7 @@ function doSignup(event) {
     }
 
     showLoading('A criar conta…');
-    fetch(`${API_URL}/signup`, {
+    fetchWithTimeout(`${API_URL}/signup`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ name, email, password, location, hours, role: 'restaurant' })
@@ -340,7 +347,7 @@ async function saveRestaurantSettings() {
     }
 
     try {
-        const res = await fetch(`${API_URL}/restaurants/${currentRestaurant.id}`, {
+        const res = await fetchWithTimeout(`${API_URL}/restaurants/${currentRestaurant.id}`, {
             method: 'PUT',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify(body)
@@ -370,7 +377,7 @@ async function loadMenu() {
         return;
     }
     try {
-        const res = await fetch(`${API_URL}/menu/${currentRestaurant.id}`);
+        const res = await fetchWithTimeout(`${API_URL}/menu/${currentRestaurant.id}`);
         const data = await res.json();
         // Normalizar campos da BD para os nomes usados no frontend
         menuItems = data.map(m => ({
@@ -393,7 +400,7 @@ async function loadReservations() {
         return;
     }
     try {
-        const res = await fetch(`${API_URL}/reservations/restaurant/${currentRestaurant.id}`);
+        const res = await fetchWithTimeout(`${API_URL}/reservations/restaurant/${currentRestaurant.id}`);
         const data = await res.json();
         // Normalizar campos da BD para os nomes usados no frontend
         reservations = data.map(r => ({
@@ -570,7 +577,7 @@ function renderReservations() {
 }
 
 function confirmReservation(id) {
-    fetch(`${API_URL}/reservations/${id}/status`, {
+    fetchWithTimeout(`${API_URL}/reservations/${id}/status`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ status: 'confirmed' })
@@ -593,7 +600,7 @@ function confirmReservation(id) {
 
 function cancelReservation(id) {
     if (!confirm('Cancelar esta reserva?')) return;
-    fetch(`${API_URL}/reservations/${id}/status`, {
+    fetchWithTimeout(`${API_URL}/reservations/${id}/status`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ status: 'cancelled' })
@@ -614,7 +621,7 @@ function cancelReservation(id) {
 }
 
 function markCollected(id) {
-    fetch(`${API_URL}/reservations/${id}/status`, {
+    fetchWithTimeout(`${API_URL}/reservations/${id}/status`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ status: 'collected' })
@@ -707,7 +714,7 @@ function saveMenuItem() {
             closeMenuModal(); renderMenu(); updateStats();
             return;
         }
-        fetch(`${API_URL}/menu/${editingItemId}`, {
+        fetchWithTimeout(`${API_URL}/menu/${editingItemId}`, {
             method: 'PUT',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ nome_menu, descricao, preco, categoria, alergenos: alergenos || null })
@@ -734,7 +741,7 @@ function saveMenuItem() {
             closeMenuModal(); renderMenu(); updateStats();
             return;
         }
-        fetch(`${API_URL}/menu`, {
+        fetchWithTimeout(`${API_URL}/menu`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ restaurant_id: currentRestaurant.id, nome_menu, descricao, preco, categoria, alergenos: alergenos || null })
@@ -766,7 +773,7 @@ function editMenuItem(id) { openMenuModal(id); }
 
 function deleteMenuItem(id) {
     if (!confirm('Remover este item do menu?')) return;
-    fetch(`${API_URL}/menu/${id}`, { method: 'DELETE' })
+    fetchWithTimeout(`${API_URL}/menu/${id}`, { method: 'DELETE' })
     .then(r => r.json())
     .then(data => {
         if (data.success) {
@@ -849,7 +856,7 @@ function validateQR(resultElOverride) {
 
     showLoading('A validar…');
 
-    fetch(`${API_URL}/reservations/validate`, {
+    fetchWithTimeout(`${API_URL}/reservations/validate`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ qr_token: token, restaurant_id: currentRestaurant?.id })

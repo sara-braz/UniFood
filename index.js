@@ -1,5 +1,12 @@
 const API_URL = API;
 
+function fetchWithTimeout(url, options = {}, ms = 5000) {
+    const ctrl = new AbortController();
+    const timer = setTimeout(() => ctrl.abort(), ms);
+    return fetch(url, { ...options, signal: ctrl.signal })
+        .finally(() => clearTimeout(timer));
+}
+
 const RESTAURANT_IDS = {
     'Pastelaria Monserrate Confeitaria': 3,
     'Tulipa de Sintra': 4,
@@ -91,7 +98,7 @@ function doLogin(event) {
 
     // 1. Backend
     showLoading('A entrar...');
-    fetch(`${API_URL}/login`, {
+    fetchWithTimeout(`${API_URL}/login`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ email, password, role: 'student' })
@@ -145,7 +152,7 @@ async function loadRestaurants() {
     }
 
     try {
-        const res  = await fetch(`${API_URL}/restaurants`);
+        const res  = await fetchWithTimeout(`${API_URL}/restaurants`);
         const data = await res.json();
         data.forEach(r => { RESTAURANT_IDS[r.nome_comercial] = r.id; });
         grid.innerHTML = data.map(r =>
@@ -188,7 +195,7 @@ function doSignup(event) {
 
     // Tentar backend
     showLoading('A criar conta...');
-    fetch(`${API_URL}/signup`, {
+    fetchWithTimeout(`${API_URL}/signup`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ name, email, password, student_number: number, role: 'student' })
@@ -285,7 +292,7 @@ function loadMyReservations() {
 
     if (session?.id) {
         showLoading('A carregar reservas...');
-        fetch(`${API_URL}/reservations/student/${session.id}`)
+        fetchWithTimeout(`${API_URL}/reservations/student/${session.id}`)
         .then(r => r.json())
         .then(data => {
             hideLoading();
@@ -432,7 +439,7 @@ async function cancelMyReservation(id) {
         return;
     }
     try {
-        const res = await fetch(`${API_URL}/reservations/${id}/status`, {
+        const res = await fetchWithTimeout(`${API_URL}/reservations/${id}/status`, {
             method: 'PUT',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ status: 'cancelled' })
@@ -489,7 +496,7 @@ function confirmRating() {
 }
 
 function rateReservation(token, id, rating) {
-    fetch(`${API_URL}/reservations/${id}/rating`, {
+    fetchWithTimeout(`${API_URL}/reservations/${id}/rating`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ rating })
@@ -519,7 +526,7 @@ function loadMenuForReservation() {
 
     container.innerHTML = '<p style="color:#6b6b6b;font-size:0.85rem">A carregar...</p>';
 
-    fetch(`${API_URL}/menu/${restaurantId}`)
+    fetchWithTimeout(`${API_URL}/menu/${restaurantId}`)
     .then(r => r.json())
     .then(items => {
         if (!items.length) { container.innerHTML = '<p style="color:#6b6b6b;font-size:0.85rem">Sem itens disponíveis.</p>'; return; }
@@ -669,7 +676,7 @@ function createReservationAndShowQR() {
         return;
     }
 
-    fetch(`${API_URL}/reservations`, {
+    fetchWithTimeout(`${API_URL}/reservations`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ student_id, restaurant_id, menu_id: selectedMenuItem?.id || null, modalidade: [selectedTimeSlot, selectedMealType === 'takeaway' ? 'Take-away' : selectedMealType === 'dinein' ? 'No local' : null].filter(Boolean).join(' · ') || null })
@@ -757,7 +764,7 @@ async function initMap() {
 
     let restaurants = [];
     try {
-        const res = await fetch(`${API_URL}/restaurants`);
+        const res = await fetchWithTimeout(`${API_URL}/restaurants`);
         restaurants = await res.json();
     } catch {
         restaurants = [];
@@ -806,7 +813,7 @@ async function loadAllMenus() {
     if (!container) return;
     container.innerHTML = '<p style="color:var(--muted);padding:20px 0">A carregar menus…</p>';
     try {
-        const res = await fetch(`${API_URL}/restaurants`);
+        const res = await fetchWithTimeout(`${API_URL}/restaurants`);
         const restaurants = await res.json();
         if (!restaurants.length) {
             container.innerHTML = '<p style="color:var(--muted)">Sem restaurantes disponíveis.</p>';
@@ -814,7 +821,7 @@ async function loadAllMenus() {
         }
         const groups = await Promise.all(restaurants.map(async r => {
             try {
-                const mr = await fetch(`${API_URL}/menu/${r.id}`);
+                const mr = await fetchWithTimeout(`${API_URL}/menu/${r.id}`);
                 return { r, items: await mr.json() };
             } catch { return { r, items: [] }; }
         }));
@@ -855,7 +862,7 @@ async function openSettings() {
     });
     if (session.id) {
         try {
-            const res = await fetch(`${API_URL}/users/${session.id}`);
+            const res = await fetchWithTimeout(`${API_URL}/users/${session.id}`);
             const data = await res.json();
             if (data.success) {
                 document.getElementById('walletBalance').textContent =
@@ -882,7 +889,7 @@ async function changePassword(event) {
     if (novo !== confirmar) { showToast('As novas passwords não coincidem.', 'error'); return; }
     if (novo.length < 6) { showToast('A nova password deve ter pelo menos 6 caracteres.', 'error'); return; }
     try {
-        const res = await fetch(`${API_URL}/users/${session.id}/password`, {
+        const res = await fetchWithTimeout(`${API_URL}/users/${session.id}/password`, {
             method: 'PUT',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ currentPassword: current, newPassword: novo })
@@ -905,7 +912,7 @@ async function topupWallet(amount) {
     const session = getStudentSession();
     if (!session?.id) { showToast('Funcionalidade apenas disponível com conta online.', 'info'); return; }
     try {
-        const res = await fetch(`${API_URL}/users/${session.id}/topup`, {
+        const res = await fetchWithTimeout(`${API_URL}/users/${session.id}/topup`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ amount })
@@ -930,7 +937,7 @@ async function saveAccountInfo(event) {
     const name = document.getElementById('settingNameInput').value.trim();
     if (!name) { showToast('O nome não pode estar vazio.', 'error'); return; }
     try {
-        const res = await fetch(`${API_URL}/users/${session.id}`, {
+        const res = await fetchWithTimeout(`${API_URL}/users/${session.id}`, {
             method: 'PUT',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ name })
@@ -956,7 +963,7 @@ async function exportMyData() {
     const session = getStudentSession();
     if (!session?.id) { showToast('Funcionalidade apenas disponível com conta online.', 'info'); return; }
     try {
-        const res = await fetch(`${API_URL}/users/${session.id}/export`);
+        const res = await fetchWithTimeout(`${API_URL}/users/${session.id}/export`);
         const data = await res.json();
         const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
         const link = document.createElement('a');
@@ -981,7 +988,7 @@ async function deleteAccount() {
     if (!session?.id) { showToast('Funcionalidade apenas disponível com conta online.', 'info'); return; }
     if (!confirm('Tem a certeza que pretende eliminar a sua conta?\n\nEsta ação é irreversível. Todos os seus dados e reservas serão apagados permanentemente.')) return;
     try {
-        const res = await fetch(`${API_URL}/users/${session.id}`, { method: 'DELETE' });
+        const res = await fetchWithTimeout(`${API_URL}/users/${session.id}`, { method: 'DELETE' });
         const data = await res.json();
         if (data.success) {
             closeSettings();
