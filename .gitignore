@@ -5,3 +5,5 @@ seed_pizaria.js
 node_modules/
 imagens/
 serve.js
+.DS_Store
+*.sql

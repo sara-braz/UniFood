@@ -4,7 +4,10 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>UniFood - Sistema de Restauração ISCTE</title>
+    <link rel="icon" href="data:,">
     <link rel="stylesheet" href="style.css">
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 </head>
 <body>
     <!-- Header -->
@@ -13,13 +16,27 @@
             <div class="logo" onclick="goHome()">UniFood</div>
         </div>
         <div class="user-info" id="userInfo" style="display: none;">
+            <div class="notif-wrapper">
+                <div class="notif-bell" id="notifBell" onclick="toggleNotifPanel()">
+                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" class="size-6">
+                      <path fill-rule="evenodd" d="M5.25 9a6.75 6.75 0 0 1 13.5 0v.75c0 2.123.8 4.057 2.118 5.52a.75.75 0 0 1-.297 1.206c-1.544.57-3.16.99-4.831 1.243a3.75 3.75 0 1 1-7.48 0 24.585 24.585 0 0 1-4.831-1.244.75.75 0 0 1-.298-1.205A8.217 8.217 0 0 0 5.25 9.75V9Zm4.502 8.9a2.25 2.25 0 1 0 4.496 0 25.057 25.057 0 0 1-4.496 0Z" clip-rule="evenodd" />
+                    </svg><span id="notifBadge" class="notif-badge hidden">0</span>
+                </div>
+                <div id="notifPanel" class="notif-panel hidden">
+                    <div class="notif-panel-header">Notificações</div>
+                    <ul id="notifList"><li class="notif-empty">Sem notificações novas.</li></ul>
+                </div>
+            </div>
             <button class="user-info-btn" onclick="toggleDropdown()">
                 <div class="user-avatar" id="userAvatar">EU</div>
                 <span id="userName">Estudante</span>
             </button>
             <div class="user-dropdown" id="userDropdown">
+                <button class="dropdown-item" onclick="openSettings()">
+                    Definições
+                </button>
                 <button class="dropdown-item danger" onclick="doLogout()">
-                    🚪 Terminar sessão
+                    Terminar sessão
                 </button>
             </div>
         </div>
@@ -88,7 +105,6 @@
 
                 <div class="divider">ou</div>
                 <a href="restaurant.html" class="restaurant-link">
-                    <span class="icon">🍽️</span>
                     Área de Restaurantes
                 </a>
             </div>
@@ -104,29 +120,58 @@
             </div>
             <div class="features-grid">
                 <div class="feature-card" data-page="restaurantsPage">
-                    <div class="feature-icon">🍽️</div>
+                    <div class="feature-icon">
+                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="size-6">
+                          <path stroke-linecap="round" stroke-linejoin="round" d="M13.5 21v-7.5a.75.75 0 0 1 .75-.75h3a.75.75 0 0 1 .75.75V21m-4.5 0H2.36m11.14 0H18m0 0h3.64m-1.39 0V9.349M3.75 21V9.349m0 0a3.001 3.001 0 0 0 3.75-.615A2.993 2.993 0 0 0 9.75 9.75c.896 0 1.7-.393 2.25-1.016a2.993 2.993 0 0 0 2.25 1.016c.896 0 1.7-.393 2.25-1.015a3.001 3.001 0 0 0 3.75.614m-16.5 0a3.004 3.004 0 0 1-.621-4.72l1.189-1.19A1.5 1.5 0 0 1 5.378 3h13.243a1.5 1.5 0 0 1 1.06.44l1.19 1.189a3 3 0 0 1-.621 4.72M6.75 18h3.75a.75.75 0 0 0 .75-.75V13.5a.75.75 0 0 0-.75-.75H6.75a.75.75 0 0 0-.75.75v3.75c0 .414.336.75.75.75Z" />
+                        </svg>
+                    </div>
                     <h3>Consultar Restaurantes</h3>
                     <p>Veja todos os restaurantes e cafés disponíveis</p>
                 </div>
-                <div class="feature-card" data-page="restaurantsPage">
-                    <div class="feature-icon">📋</div>
+                <div class="feature-card" data-page="allMenusPage">
+                    <div class="feature-icon">
+                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="size-6">
+                          <path stroke-linecap="round" stroke-linejoin="round" d="M6 6.878V6a2.25 2.25 0 0 1 2.25-2.25h7.5A2.25 2.25 0 0 1 18 6v.878m-12 0c.235-.083.487-.128.75-.128h10.5c.263 0 .515.045.75.128m-12 0A2.25 2.25 0 0 0 4.5 9v.878m13.5-3A2.25 2.25 0 0 1 19.5 9v.878m0 0a2.246 2.246 0 0 0-.75-.128H5.25c-.263 0-.515.045-.75.128m15 0A2.25 2.25 0 0 1 21 12v6a2.25 2.25 0 0 1-2.25 2.25H5.25A2.25 2.25 0 0 1 3 18v-6c0-.98.626-1.813 1.5-2.122" />
+                        </svg>
+                    </div>
                     <h3>Visualizar Menus</h3>
                     <p>Consulte os menus de cada estabelecimento</p>
                 </div>
                 <div class="feature-card" data-page="reservationPage">
-                    <div class="feature-icon">📅</div>
+                    <div class="feature-icon">
+                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="size-6">
+                          <path stroke-linecap="round" stroke-linejoin="round" d="M6.75 3v2.25M17.25 3v2.25M3 18.75V7.5a2.25 2.25 0 0 1 2.25-2.25h13.5A2.25 2.25 0 0 1 21 7.5v11.25m-18 0A2.25 2.25 0 0 0 5.25 21h13.5A2.25 2.25 0 0 0 21 18.75m-18 0v-7.5A2.25 2.25 0 0 1 5.25 9h13.5A2.25 2.25 0 0 1 21 11.25v7.5m-9-6h.008v.008H12v-.008ZM12 15h.008v.008H12V15Zm0 2.25h.008v.008H12v-.008ZM9.75 15h.008v.008H9.75V15Zm0 2.25h.008v.008H9.75v-.008ZM7.5 15h.008v.008H7.5V15Zm0 2.25h.008v.008H7.5v-.008Zm6.75-4.5h.008v.008h-.008v-.008Zm0 2.25h.008v.008h-.008V15Zm0 2.25h.008v.008h-.008v-.008Zm2.25-4.5h.008v.008H16.5v-.008Zm0 2.25h.008v.008H16.5V15Z" />
+                        </svg>
+                    </div>
                     <h3>Reservar Refeição</h3>
                     <p>Faça a sua reserva através do sistema de senhas</p>
                 </div>
                 <div class="feature-card" data-page="myReservationsPage">
-                    <div class="feature-icon">🎫</div>
+                    <div class="feature-icon">
+                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="size-6">
+                          <path stroke-linecap="round" stroke-linejoin="round" d="M9 12.75 11.25 15 15 9.75M21 12a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z" />
+                        </svg>
+                    </div>
                     <h3>As Minhas Reservas</h3>
                     <p>Consulte as suas reservas e QR Codes anteriores</p>
                 </div>
                 <div class="feature-card" data-page="paymentPage">
-                    <div class="feature-icon">💳</div>
+                    <div class="feature-icon">
+                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="size-6">
+                          <path stroke-linecap="round" stroke-linejoin="round" d="M2.25 8.25h19.5M2.25 9h19.5m-16.5 5.25h6m-6 2.25h3m-3.75 3h15a2.25 2.25 0 0 0 2.25-2.25V6.75A2.25 2.25 0 0 0 19.5 4.5h-15a2.25 2.25 0 0 0-2.25 2.25v10.5A2.25 2.25 0 0 0 4.5 19.5Z" />
+                        </svg>
+                    </div>
                     <h3>Pagamento Online</h3>
                     <p>Efetue pagamentos de forma rápida e segura</p>
+                </div>
+                <div class="feature-card" data-page="mapaPage">
+                    <div class="feature-icon">
+                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="size-6">
+                          <path stroke-linecap="round" stroke-linejoin="round" d="M9 6.75V15m6-6v8.25m.503 3.498 4.875-2.437c.381-.19.622-.58.622-1.006V4.82c0-.836-.88-1.38-1.628-1.006l-3.869 1.934c-.317.159-.69.159-1.006 0L9.503 3.252a1.125 1.125 0 0 0-1.006 0L3.622 5.689C3.24 5.88 3 6.27 3 6.695V19.18c0 .836.88 1.38 1.628 1.006l3.869-1.934c.317-.159.69-.159 1.006 0l4.994 2.497c.317.158.69.158 1.006 0Z" />
+                        </svg>
+                    </div>
+                    <h3>Mapa de Restaurantes</h3>
+                    <p>Veja a localização de todos os restaurantes no mapa</p>
                 </div>
             </div>
         </div>
@@ -220,6 +265,13 @@
                 <div id="step2" class="step-content">
                     <h3>Escolha a modalidade da refeição</h3>
                     <p id="selectedRestaurantLabel" style="color:var(--accent);font-weight:600;margin-bottom:16px"></p>
+                    <p style="font-size:0.88rem;color:#444;font-weight:600;margin-bottom:6px">Horário</p>
+                    <div class="time-slot-options">
+                        <button class="time-slot-btn" onclick="selectTimeSlot(this,'Pequeno-almoço')">Pequeno-almoço</button>
+                        <button class="time-slot-btn" onclick="selectTimeSlot(this,'Almoço')">Almoço</button>
+                        <button class="time-slot-btn" onclick="selectTimeSlot(this,'Jantar')">Jantar</button>
+                    </div>
+                    <p style="font-size:0.88rem;color:#444;font-weight:600;margin-bottom:10px">Modalidade</p>
                     <div class="meal-options">
                         <div class="meal-option" data-type="takeaway">
                             <h4>Take-away</h4>
@@ -262,7 +314,7 @@
 
                 <!-- Step 4: Confirmação + QR -->
                 <div id="step4" class="step-content">
-                    <h3>Reserva Confirmada! 🎉</h3>
+                    <h3>Reserva Confirmada!</h3>
                     <p>A sua reserva foi efetuada com sucesso.</p>
                     <p style="margin-top:8px">Apresente o QR Code abaixo no restaurante para levantar a sua refeição.</p>
                     <div style="text-align:center; margin: 24px 0;">
@@ -270,7 +322,7 @@
                         <p style="margin-top:12px; font-size:0.85rem; color:#6b6b6b;">Senha: <strong id="qrTokenDisplay"></strong></p>
                     </div>
                     <div class="navigation">
-                        <button class="btn btn-ghost" onclick="downloadQR()">⬇️ Guardar QR</button>
+                        <button class="btn btn-ghost" onclick="downloadQR()">Guardar QR</button>
                         <button class="btn btn-primary" onclick="showPage('mainMenuPage')">Voltar ao Menu Principal</button>
                     </div>
                 </div>
@@ -301,9 +353,118 @@
         </div>
     </section>
 
+    <!-- Página Todos os Menus -->
+    <section id="allMenusPage" class="page">
+        <div class="container">
+            <div class="section">
+                <h2>Menus dos Restaurantes</h2>
+                <p>Todos os itens disponíveis em cada estabelecimento</p>
+                <div id="allMenusContainer" style="margin-top:20px">
+                    <div style="text-align:center;padding:40px;color:#6b6b6b">A carregar menus…</div>
+                </div>
+                <button class="btn btn-ghost back-btn" onclick="showPage('mainMenuPage')">Voltar ao Menu Principal</button>
+            </div>
+        </div>
+    </section>
+
+    <!-- Página do Mapa -->
+    <section id="mapaPage" class="page">
+        <div class="container">
+            <div class="section">
+                <h2>Mapa de Restaurantes</h2>
+                <p>Localização de todos os restaurantes disponíveis na UniFood</p>
+                <div id="mapLoadingMsg" class="map-loading-msg"></div>
+                <div id="map"></div>
+                <button class="btn btn-ghost back-btn" onclick="showPage('mainMenuPage')">Voltar ao Menu Principal</button>
+            </div>
+        </div>
+    </section>
+
     <footer>
         © UniFood — Projeto ISCTE‑Sintra • Desenvolvido por Grupo A3
     </footer>
+
+    <!-- Settings modal -->
+    <div id="profileModal" class="profile-modal-overlay" onclick="if(event.target===this)closeSettings()">
+        <div class="profile-modal settings-modal">
+            <div style="display:flex;align-items:center;gap:14px;margin-bottom:20px">
+                <div class="profile-avatar-large" id="profileModalAvatar" style="margin:0;width:52px;height:52px;font-size:1.4rem;flex-shrink:0">U</div>
+                <div style="flex:1">
+                    <div class="profile-name" id="profileModalName" style="text-align:left;margin-bottom:2px">Estudante</div>
+                    <div id="profileModalEmail" style="font-size:0.82rem;color:var(--muted)"></div>
+                </div>
+            </div>
+
+            <div class="settings-section">
+                <div class="settings-section-title">Conta</div>
+                <form onsubmit="saveAccountInfo(event)">
+                    <div class="form-group" style="margin-bottom:14px">
+                        <label style="font-size:0.82rem">Nome</label>
+                        <input type="text" id="settingNameInput" placeholder="O seu nome">
+                    </div>
+                    <button type="submit" class="btn btn-primary" style="width:auto;padding:8px 18px;font-size:0.88rem">Guardar alterações</button>
+                </form>
+            </div>
+
+            <div class="settings-section">
+                <div class="settings-section-title">Segurança</div>
+                <form onsubmit="changePassword(event)">
+                    <div class="form-group" style="margin-bottom:12px">
+                        <label style="font-size:0.82rem">Password atual</label>
+                        <input type="password" id="settingCurrentPwd" placeholder="••••••••">
+                    </div>
+                    <div class="form-group" style="margin-bottom:12px">
+                        <label style="font-size:0.82rem">Nova password</label>
+                        <input type="password" id="settingNewPwd" placeholder="••••••••">
+                    </div>
+                    <div class="form-group" style="margin-bottom:14px">
+                        <label style="font-size:0.82rem">Confirmar nova password</label>
+                        <input type="password" id="settingConfirmPwd" placeholder="••••••••">
+                    </div>
+                    <button type="submit" class="btn btn-primary" style="width:auto;padding:8px 18px;font-size:0.88rem">Guardar password</button>
+                </form>
+            </div>
+
+            <div class="settings-section">
+                <div class="settings-section-title">Carteira UniFood</div>
+                <div style="display:flex;align-items:center;gap:12px;margin-bottom:14px">
+                    <div class="wallet-balance">€<span id="walletBalance">0,00</span></div>
+                    <span style="font-size:0.82rem;color:var(--muted)">saldo disponível</span>
+                </div>
+                <div class="topup-btns">
+                    <button class="btn btn-ghost topup-btn" onclick="topupWallet(5)">+ €5</button>
+                    <button class="btn btn-ghost topup-btn" onclick="topupWallet(10)">+ €10</button>
+                    <button class="btn btn-ghost topup-btn" onclick="topupWallet(20)">+ €20</button>
+                </div>
+            </div>
+
+            <div class="settings-section settings-danger-section">
+                <div class="settings-section-title" style="color:#dc2626">Privacidade & RGPD</div>
+
+                <button class="btn btn-ghost" style="width:100%;font-size:0.82rem;margin-bottom:12px;text-align:left;justify-content:space-between;display:flex" onclick="togglePrivacyPolicy(this)">
+                    Ver política de privacidade <span>▸</span>
+                </button>
+                <div id="privacyPolicyBlock" class="privacy-block" style="display:none">
+                    <p><strong>Dados recolhidos:</strong> Nome, email, histórico de reservas e avaliações.</p>
+                    <p><strong>Finalidade:</strong> Prestação do serviço de reservas de refeições UniFood.</p>
+                    <p><strong>Acesso:</strong> O restaurante reservado pode ver o seu nome e email para processar a reserva.</p>
+                    <p><strong>Conservação:</strong> Os dados são mantidos até à eliminação da conta.</p>
+                    <p><strong>Os seus direitos (RGPD):</strong> Acesso, retificação, portabilidade e eliminação</p>
+                    <p><strong>Responsável:</strong> UniFood.</p>
+                </div>
+
+                <button class="btn btn-ghost" style="width:100%;font-size:0.82rem;margin-bottom:14px;border-color:#048045;color:#048045;display:flex;align-items:center;justify-content:center;gap:6px" onclick="exportMyData()">
+                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" style="width:16px;height:16px"><path stroke-linecap="round" stroke-linejoin="round" d="M3 16.5v2.25A2.25 2.25 0 0 0 5.25 21h13.5A2.25 2.25 0 0 0 21 18.75V16.5M16.5 12 12 16.5m0 0L7.5 12m4.5 4.5V3" /></svg>
+                    Exportar os meus dados (Art. 15 / 20 RGPD)
+                </button>
+
+                <p style="font-size:0.82rem;color:#6b6b6b;margin-bottom:14px">Ao eliminar a sua conta, todos os seus dados pessoais e reservas serão apagados permanentemente, em conformidade com o Regulamento Geral de Proteção de Dados (RGPD / GDPR).</p>
+                <button class="btn" style="background:#dc2626;color:white;width:auto;padding:8px 18px;font-size:0.88rem" onclick="deleteAccount()">Eliminar conta permanentemente</button>
+            </div>
+
+            <button class="btn btn-ghost" style="width:100%;margin-top:16px" onclick="closeSettings()">Fechar</button>
+        </div>
+    </div>
 
     <!-- Rating modal -->
     <div id="ratingModal" onclick="if(event.target===this)closeRatingModal()"
@@ -324,6 +485,8 @@
         <div class="spinner"></div>
         <div class="loading-text" id="loadingText">A processar…</div>
     </div>
+
+    <div id="toastContainer"></div>
 
     <script src="config.js"></script>
     <script src="index.js"></script>

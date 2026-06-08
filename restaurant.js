@@ -166,6 +166,7 @@ function showTab(pageId, navEl) {
     if (navEl) navEl.classList.add('active');
     const titles = { statsPage: 'Estatísticas', reservationsPage: 'Reservas', menuPage: 'Gerir Menu', settingsPage: 'Definições' };
     document.getElementById('topbarTitle').textContent = titles[pageId] || '';
+    if (pageId === 'settingsPage') setTimeout(initSettingsMap, 50);
 }
 
 // INIT DASHBOARD
@@ -176,6 +177,7 @@ async function initDashboard() {
     });
 
     await Promise.all([loadMenu(), loadReservations()]);
+    updateResNotifBadge();
     hideLoading();
 
     renderBarChart();
@@ -183,6 +185,65 @@ async function initDashboard() {
     updateStats();
     renderTopItems();
     loadSettings();
+    startResNotifPoll();
+}
+
+// NOTIFICAÇÕES DO RESTAURANTE
+let _resNotifPollStarted = false;
+
+function resAckKey() {
+    return `res_ack_statuses_${currentRestaurant?.id || 'local'}`;
+}
+
+function updateResNotifBadge() {
+    if (!currentRestaurant) return;
+    const acked = JSON.parse(localStorage.getItem(resAckKey()) || '{}');
+    const unread = reservations.filter(r =>
+        !acked.hasOwnProperty(String(r.id)) || acked[String(r.id)] !== r.status
+    );
+    const badge = document.getElementById('resNotifBadge');
+    if (badge) {
+        badge.textContent = unread.length > 9 ? '9+' : String(unread.length);
+        unread.length > 0 ? badge.classList.remove('hidden') : badge.classList.add('hidden');
+    }
+    const list = document.getElementById('resNotifList');
+    if (!list) return;
+    const statusColors = { pending: '#d97706', confirmed: '#048045', collected: '#2563eb', cancelled: '#dc2626' };
+    const statusLabels = { pending: 'Pendente', confirmed: 'Confirmada', collected: 'Levantada', cancelled: 'Cancelada' };
+    list.innerHTML = unread.length === 0
+        ? '<li class="res-notif-empty">Sem notificações novas.</li>'
+        : unread.map(r => {
+            const isNew = !acked.hasOwnProperty(String(r.id));
+            const prevStatus = acked[String(r.id)];
+            const msg = isNew
+                ? `Nova reserva de <strong>${r.student}</strong>${r.item !== '—' ? ' · ' + r.item : ''}`
+                : `<strong>${r.student}</strong>: ${statusLabels[prevStatus] || prevStatus} → ${statusLabels[r.status] || r.status}`;
+            return `<li class="res-notif-item">
+                <div class="res-notif-dot" style="background:${statusColors[r.status] || '#6b6b6b'}"></div>
+                <div class="res-notif-text">${msg}<br><span style="font-size:0.75rem;color:#999">${r.time}</span></div>
+            </li>`;
+        }).join('');
+}
+
+function toggleResNotifPanel() {
+    const panel = document.getElementById('resNotifPanel');
+    panel.classList.toggle('hidden');
+    if (!panel.classList.contains('hidden')) {
+        const acked = JSON.parse(localStorage.getItem(resAckKey()) || '{}');
+        reservations.forEach(r => { acked[String(r.id)] = r.status; });
+        localStorage.setItem(resAckKey(), JSON.stringify(acked));
+        const badge = document.getElementById('resNotifBadge');
+        if (badge) { badge.classList.add('hidden'); badge.textContent = '0'; }
+    }
+}
+
+function startResNotifPoll() {
+    if (_resNotifPollStarted) return;
+    _resNotifPollStarted = true;
+    setInterval(async () => {
+        await loadReservations();
+        updateResNotifBadge();
+    }, 30000);
 }
 
 // DEFINIÇÕES DO RESTAURANTE
@@ -201,6 +262,59 @@ function loadSettings() {
     }
 }
 
+// MAPA DE LOCALIZAÇÃO (Definições)
+let _settingsMap = null;
+let _settingsMarker = null;
+
+function initSettingsMap() {
+    const sintra = [38.8029, -9.3817];
+    const lat = parseFloat(currentRestaurant?.latitude);
+    const lon = parseFloat(currentRestaurant?.longitude);
+    const hasCoords = !isNaN(lat) && !isNaN(lon) && lat !== 0;
+    const center = hasCoords ? [lat, lon] : sintra;
+    const zoom   = hasCoords ? 17 : 15;
+
+    if (_settingsMap) {
+        _settingsMap.invalidateSize();
+        if (hasCoords && _settingsMarker) {
+            _settingsMarker.setLatLng(center);
+            _settingsMap.setView(center, zoom);
+            updateCoordDisplay();
+        }
+        return;
+    }
+
+    _settingsMap = L.map('settingsMap').setView(center, zoom);
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+        attribution: '© OpenStreetMap contributors',
+        maxZoom: 19
+    }).addTo(_settingsMap);
+
+    if (hasCoords) {
+        _settingsMarker = L.marker(center, { draggable: true }).addTo(_settingsMap);
+        _settingsMarker.on('dragend', updateCoordDisplay);
+        updateCoordDisplay();
+    }
+
+    _settingsMap.on('click', function (e) {
+        const { lat, lng } = e.latlng;
+        if (_settingsMarker) {
+            _settingsMarker.setLatLng([lat, lng]);
+        } else {
+            _settingsMarker = L.marker([lat, lng], { draggable: true }).addTo(_settingsMap);
+            _settingsMarker.on('dragend', updateCoordDisplay);
+        }
+        updateCoordDisplay();
+    });
+}
+
+function updateCoordDisplay() {
+    if (!_settingsMarker) return;
+    const { lat, lng } = _settingsMarker.getLatLng();
+    const el = document.getElementById('settingsCoordDisplay');
+    if (el) el.textContent = `Pin definido em: ${lat.toFixed(6)}, ${lng.toFixed(6)}`;
+}
+
 async function saveRestaurantSettings() {
     const body = {
         nome_comercial: document.getElementById('settingName').value.trim(),
@@ -209,6 +323,11 @@ async function saveRestaurantSettings() {
         contacto:       document.getElementById('settingContact').value.trim(),
         horario:        document.getElementById('settingHours').value.trim(),
     };
+    if (_settingsMarker) {
+        const { lat, lng } = _settingsMarker.getLatLng();
+        body.latitude  = lat;
+        body.longitude = lng;
+    }
     const fb = document.getElementById('settingsFeedback');
 
     if (!currentRestaurant.id) {
@@ -259,7 +378,8 @@ async function loadMenu() {
             name: m.nome_menu,
             desc: m.descricao || '',
             price: parseFloat(m.preco),
-            category: 'prato'  // BD não tem categoria ainda — padrão prato
+            category: m.categoria || 'prato',
+            allergens: m.alergenos || ''
         }));
     } catch {
         menuItems = [];
@@ -532,13 +652,14 @@ function renderMenu(cat = 'all') {
                     <span class="menu-card-price">€${m.price.toFixed(2)}</span>
                 </div>
                 <div class="menu-card-desc">${m.desc || '—'}</div>
+                ${m.allergens ? `<div class="menu-card-allergens">⚠ ${m.allergens}</div>` : ''}
                 <div class="menu-card-footer">
-                    <button class="btn btn-sm btn-ghost" onclick="editMenuItem(${m.id})">✏️ Editar</button>
-                    <button class="btn btn-sm btn-danger" onclick="deleteMenuItem(${m.id})">🗑️ Remover</button>
+                    <button class="btn btn-sm btn-ghost" onclick="editMenuItem(${m.id})"><svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" style="width:15px;height:15px;vertical-align:middle;margin-right:4px"><path stroke-linecap="round" stroke-linejoin="round" d="m16.862 4.487 1.687-1.688a1.875 1.875 0 1 1 2.652 2.652L10.582 16.07a4.5 4.5 0 0 1-1.897 1.13L6 18l.8-2.685a4.5 4.5 0 0 1 1.13-1.897l8.932-8.931Zm0 0L19.5 7.125M18 14v4.75A2.25 2.25 0 0 1 15.75 21H5.25A2.25 2.25 0 0 1 3 18.75V8.25A2.25 2.25 0 0 1 5.25 6H10" /></svg>Editar</button>
+                    <button class="btn btn-sm btn-danger" onclick="deleteMenuItem(${m.id})"><svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" style="width:15px;height:15px;vertical-align:middle;margin-right:4px"><path stroke-linecap="round" stroke-linejoin="round" d="m14.74 9-.346 9m-4.788 0L9.26 9m9.968-3.21c.342.052.682.107 1.022.166m-1.022-.165L18.16 19.673a2.25 2.25 0 0 1-2.244 2.077H8.084a2.25 2.25 0 0 1-2.244-2.077L4.772 5.79m14.456 0a48.108 48.108 0 0 0-3.478-.397m-12 .562c.34-.059.68-.114 1.022-.165m0 0a48.11 48.11 0 0 1 3.478-.397m7.5 0v-.916c0-1.18-.91-2.164-2.09-2.201a51.964 51.964 0 0 0-3.32 0c-1.18.037-2.09 1.022-2.09 2.201v.916m7.5 0a48.667 48.667 0 0 0-7.5 0" /></svg>Remover</button>
                 </div>
             </div>
         `).join('')
-        : `<div class="empty-state"><div class="icon">🍽️</div><p>Nenhum item no menu</p></div>`;
+        : `<div class="empty-state"><p>Nenhum item no menu</p></div>`;
 }
 
 function openMenuModal(id = null) {
@@ -549,10 +670,14 @@ function openMenuModal(id = null) {
         document.getElementById('itemName').value = item.name;
         document.getElementById('itemDesc').value = item.desc;
         document.getElementById('itemPrice').value = item.price;
+        document.getElementById('itemCategory').value = item.category || 'prato';
+        document.getElementById('itemAllergens').value = item.allergens || '';
     } else {
         document.getElementById('itemName').value = '';
         document.getElementById('itemDesc').value = '';
         document.getElementById('itemPrice').value = '';
+        document.getElementById('itemCategory').value = 'prato';
+        document.getElementById('itemAllergens').value = '';
     }
     document.getElementById('menuModal').classList.add('open');
 }
@@ -566,6 +691,8 @@ function saveMenuItem() {
     const nome_menu = document.getElementById('itemName').value.trim();
     const descricao = document.getElementById('itemDesc').value.trim();
     const preco     = parseFloat(document.getElementById('itemPrice').value);
+    const categoria = document.getElementById('itemCategory').value;
+    const alergenos = document.getElementById('itemAllergens').value.trim();
 
     if (!nome_menu || isNaN(preco)) {
         alert('Preencha o nome e o preço.');
@@ -576,20 +703,20 @@ function saveMenuItem() {
         // modo demo (sem id real) — atualizar só localmente
         if (!currentRestaurant.id) {
             const item = menuItems.find(m => m.id === editingItemId);
-            if (item) { item.name = nome_menu; item.desc = descricao; item.price = preco; }
+            if (item) { item.name = nome_menu; item.desc = descricao; item.price = preco; item.category = categoria; item.allergens = alergenos; }
             closeMenuModal(); renderMenu(); updateStats();
             return;
         }
         fetch(`${API_URL}/menu/${editingItemId}`, {
             method: 'PUT',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ nome_menu, descricao, preco })
+            body: JSON.stringify({ nome_menu, descricao, preco, categoria, alergenos: alergenos || null })
         })
         .then(r => r.json())
         .then(data => {
             if (data.success) {
                 const item = menuItems.find(m => m.id === editingItemId);
-                if (item) { item.name = nome_menu; item.desc = descricao; item.price = preco; }
+                if (item) { item.name = nome_menu; item.desc = descricao; item.price = preco; item.category = categoria; item.allergens = alergenos; }
                 closeMenuModal();
                 renderMenu();
                 updateStats();
@@ -597,20 +724,20 @@ function saveMenuItem() {
         })
         .catch(() => {
             const item = menuItems.find(m => m.id === editingItemId);
-            if (item) { item.name = nome_menu; item.desc = descricao; item.price = preco; }
+            if (item) { item.name = nome_menu; item.desc = descricao; item.price = preco; item.category = categoria; item.allergens = alergenos; }
             closeMenuModal(); renderMenu(); updateStats();
         });
     } else {
         // modo demo (sem id real) — adicionar só localmente
         if (!currentRestaurant.id) {
-            menuItems.push({ id: Date.now(), name: nome_menu, desc: descricao, price: preco, category: 'prato' });
+            menuItems.push({ id: Date.now(), name: nome_menu, desc: descricao, price: preco, category: categoria, allergens: alergenos });
             closeMenuModal(); renderMenu(); updateStats();
             return;
         }
         fetch(`${API_URL}/menu`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ restaurant_id: currentRestaurant.id, nome_menu, descricao, preco })
+            body: JSON.stringify({ restaurant_id: currentRestaurant.id, nome_menu, descricao, preco, categoria, alergenos: alergenos || null })
         })
         .then(r => r.json())
         .then(data => {
@@ -620,7 +747,8 @@ function saveMenuItem() {
                     name: data.item.nome_menu,
                     desc: data.item.descricao || '',
                     price: parseFloat(data.item.preco),
-                    category: 'prato'
+                    category: data.item.categoria || 'prato',
+                    allergens: data.item.alergenos || ''
                 });
                 closeMenuModal();
                 renderMenu();
@@ -628,7 +756,7 @@ function saveMenuItem() {
             }
         })
         .catch(() => {
-            menuItems.push({ id: Date.now(), name: nome_menu, desc: descricao, price: preco, category: 'prato' });
+            menuItems.push({ id: Date.now(), name: nome_menu, desc: descricao, price: preco, category: categoria, allergens: alergenos });
             closeMenuModal(); renderMenu(); updateStats();
         });
     }
@@ -780,6 +908,12 @@ document.getElementById('qrModal')?.addEventListener('click', function(e) {
 document.addEventListener('DOMContentLoaded', function() {
     document.getElementById('qrTokenInput')?.addEventListener('keydown', function(e) {
         if (e.key === 'Enter') validateQR();
+    });
+    document.addEventListener('click', function(e) {
+        const wrapper = document.getElementById('resNotifBell')?.closest('.res-notif-wrapper');
+        if (wrapper && !wrapper.contains(e.target)) {
+            document.getElementById('resNotifPanel')?.classList.add('hidden');
+        }
     });
 });
 

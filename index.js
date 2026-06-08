@@ -99,16 +99,16 @@ function doLogin(event) {
     .then(r => r.json())
     .then(data => {
         hideLoading();
-        if (data.success) loginSuccess({ name: data.user.name, id: data.user.id });
+        if (data.success) loginSuccess({ name: data.user.name, id: data.user.id, email: data.user.email });
         else showError('loginError', data.message || 'Email ou palavra-passe incorretos.');
     })
     .catch(() => {
         hideLoading();
         // 2. Offline — credenciais estáticas ou registadas localmente
         const staticUser = DEMO_USERS.find(u => u.email === email && u.password === password);
-        if (staticUser) { loginSuccess({ name: staticUser.name, id: null }); return; }
+        if (staticUser) { loginSuccess({ name: staticUser.name, id: null, email: staticUser.email }); return; }
         const localUser = getLocalUsers().find(u => u.email === email && u.password === password);
-        if (localUser) { loginSuccess({ name: localUser.name, id: null }); return; }
+        if (localUser) { loginSuccess({ name: localUser.name, id: null, email: localUser.email }); return; }
         showError('loginError', 'Email ou palavra-passe incorretos.');
     });
 }
@@ -197,7 +197,7 @@ function doSignup(event) {
     .then(data => {
         hideLoading();
         if (data.success) {
-            alert('Conta criada com sucesso! Pode entrar agora.');
+            showToast('Conta criada com sucesso! Pode entrar agora.', 'success');
             switchTab('login');
         } else {
             showError('signupError', data.message || 'Erro ao criar conta.');
@@ -206,7 +206,7 @@ function doSignup(event) {
     .catch(() => {
         hideLoading();
         saveLocalUser({ name, email, password });
-        alert('Conta criada (modo demo). Pode entrar agora.');
+        showToast('Conta criada (modo demo). Pode entrar agora.', 'success');
         switchTab('login');
     });
 }
@@ -235,11 +235,12 @@ function doLogout() {
     switchTab('login');
     showPage('loginPage');
 }
-// Fechar dropdown ao clicar fora
+// Fechar dropdowns ao clicar fora
 document.addEventListener('click', function (e) {
     const userInfo = document.getElementById('userInfo');
     if (!userInfo.contains(e.target)) {
         document.getElementById('userDropdown').classList.remove('open');
+        document.getElementById('notifPanel')?.classList.add('hidden');
     }
 });
 
@@ -248,6 +249,31 @@ function showPage(pageId) {
     document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
     document.getElementById(pageId).classList.add('active');
     if (pageId === 'myReservationsPage') loadMyReservations();
+    if (pageId === 'mapaPage') initMap();
+    if (pageId === 'allMenusPage') loadAllMenus();
+    if (pageId === 'reservationPage') {
+        selectedRestaurantName = null;
+        document.querySelectorAll('.restaurant-select-card').forEach(c => c.classList.remove('selected'));
+        document.querySelectorAll('.meal-option').forEach(o => o.classList.remove('selected'));
+        document.querySelectorAll('.time-slot-btn').forEach(b => b.classList.remove('selected'));
+        resetReservationSteps();
+    }
+    document.getElementById('notifPanel')?.classList.add('hidden');
+    document.getElementById('userDropdown')?.classList.remove('open');
+    closeSettings();
+}
+
+function showToast(msg, type = 'info') {
+    const container = document.getElementById('toastContainer');
+    if (!container) { console.log(msg); return; }
+    const toast = document.createElement('div');
+    toast.className = `toast ${type}`;
+    toast.textContent = msg;
+    container.appendChild(toast);
+    setTimeout(() => {
+        toast.classList.add('out');
+        setTimeout(() => toast.remove(), 400);
+    }, 3100);
 }
 
 // As Minhas Reservas
@@ -271,6 +297,7 @@ function loadMyReservations() {
                 status: r.status,
                 rating: r.rating || null
             }));
+            updateNotifBadge();
             buildMyReservationFilters();
             applyMyReservationFilters();
         })
@@ -325,7 +352,6 @@ function buildMyReservationFilters() {
 }
 
 function applyMyReservationFilters() {
-    const container = document.getElementById('myReservationsList');
     let filtered = allMyReservations;
 
     if (myResFilterStatus !== 'all') {
@@ -338,7 +364,10 @@ function applyMyReservationFilters() {
         filtered = filtered.filter(r => r.restaurant === myResFilterRestaurant);
     }
 
-    renderMyReservations(container, filtered, allMyUsedTokens);
+    _resPage = 0;
+    _currentFilteredRes = filtered;
+    document.getElementById('resLoadMore')?.remove();
+    renderPagedReservations();
 }
 
 function renderMyReservations(container, list, usedTokens) {
@@ -346,7 +375,7 @@ function renderMyReservations(container, list, usedTokens) {
         const hasReservations = allMyReservations.length > 0;
         container.innerHTML = `
             <div style="text-align:center;padding:40px;color:#6b6b6b">
-                <div style="font-size:2.5rem;margin-bottom:12px">🎫</div>
+                <div style="margin-bottom:12px"></div>
                 <p>${hasReservations ? 'Nenhuma reserva encontrada para este filtro.' : 'Ainda não tem reservas.'}</p>
             </div>`;
         return;
@@ -399,6 +428,7 @@ async function cancelMyReservation(id) {
         const r = allMyReservations.find(r => r.id === id);
         if (r) r.status = 'cancelled';
         applyMyReservationFilters();
+        showToast('Reserva cancelada com sucesso.', 'success');
         return;
     }
     try {
@@ -407,9 +437,9 @@ async function cancelMyReservation(id) {
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ status: 'cancelled' })
         });
-        if (res.ok) loadMyReservations();
+        if (res.ok) { loadMyReservations(); showToast('Reserva cancelada com sucesso.', 'success'); }
     } catch {
-        alert('Sem ligação ao servidor.');
+        showToast('Sem ligação ao servidor.', 'error');
     }
 }
 
@@ -506,6 +536,7 @@ function loadMenuForReservation() {
                 <div>
                     <div style="font-weight:600;font-size:0.9rem">${item.nome_menu}</div>
                     ${item.descricao ? `<div style="font-size:0.78rem;color:#6b6b6b">${item.descricao}</div>` : ''}
+                    ${item.alergenos ? `<div class="all-menus-item-allergens">⚠ ${item.alergenos}</div>` : ''}
                 </div>
                 <span style="font-weight:700;color:var(--accent);white-space:nowrap;margin-left:12px">€${parseFloat(item.preco).toFixed(2)}</span>
             </div>`).join('');
@@ -539,6 +570,7 @@ function updateReservationSummary() {
 
     document.getElementById('reservationSummary').innerHTML = `
         <div style="display:flex;justify-content:space-between"><span>Restaurante:</span><span style="font-weight:600">${selectedRestaurantName}</span></div>
+        <div style="display:flex;justify-content:space-between;margin-top:6px"><span>Horário:</span><span style="font-weight:600">${selectedTimeSlot || '—'}</span></div>
         <div style="display:flex;justify-content:space-between;margin-top:6px"><span>Modalidade:</span><span style="font-weight:600">${modalLabel}</span></div>
         ${itemLine}`;
 }
@@ -570,6 +602,7 @@ function showMenuPage() {
 let currentReservation = null;
 let selectedRestaurantName = null;
 let selectedMealType = null;
+let selectedTimeSlot = null;
 let selectedMenuItem = null; // { id, name, price } ou null
 
 // Estado dos filtros de "As Minhas Reservas"
@@ -587,15 +620,19 @@ function selectRestaurant(card, name) {
 function nextStep(stepNumber) {
     // Validações antes de avançar
     if (stepNumber === 2 && !selectedRestaurantName) {
-        alert('Por favor selecione um restaurante.');
+        showToast('Por favor selecione um restaurante.', 'error');
         return;
     }
     if (stepNumber === 2) {
-        document.getElementById('selectedRestaurantLabel').textContent = '📍 ' + selectedRestaurantName;
+        document.getElementById('selectedRestaurantLabel').textContent = selectedRestaurantName;
         loadMenuForReservation();
     }
+    if (stepNumber === 3 && !selectedTimeSlot) {
+        showToast('Por favor selecione o horário da refeição.', 'error');
+        return;
+    }
     if (stepNumber === 3 && !selectedMealType) {
-        alert('Por favor selecione a modalidade da refeição.');
+        showToast('Por favor selecione a modalidade da refeição.', 'error');
         return;
     }
     if (stepNumber === 3) {
@@ -635,13 +672,13 @@ function createReservationAndShowQR() {
     fetch(`${API_URL}/reservations`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ student_id, restaurant_id, menu_id: selectedMenuItem?.id || null, modalidade: selectedMealType })
+        body: JSON.stringify({ student_id, restaurant_id, menu_id: selectedMenuItem?.id || null, modalidade: [selectedTimeSlot, selectedMealType === 'takeaway' ? 'Take-away' : selectedMealType === 'dinein' ? 'No local' : null].filter(Boolean).join(' · ') || null })
     })
     .then(r => r.json())
     .then(data => {
         hideLoading();
         if (!data.success) {
-            alert(data.message || 'Erro ao criar reserva.');
+            showToast(data.message || 'Erro ao criar reserva.', 'error');
             return;
         }
         const token = data.reservation.qr_token;
@@ -701,7 +738,328 @@ async function downloadQR() {
 
 function prevStep(n) { goToStep(n); }
 
-function resetReservationSteps() { selectedMealType = null; selectedMenuItem = null; goToStep(1); }
+// Mapa de Restaurantes
+let _mapInstance = null;
+
+async function initMap() {
+    const msgEl = document.getElementById('mapLoadingMsg');
+
+    if (_mapInstance) {
+        _mapInstance.invalidateSize();
+        return;
+    }
+
+    _mapInstance = L.map('map').setView([38.8029, -9.3817], 15);
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+        attribution: '© <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors',
+        maxZoom: 19
+    }).addTo(_mapInstance);
+
+    let restaurants = [];
+    try {
+        const res = await fetch(`${API_URL}/restaurants`);
+        restaurants = await res.json();
+    } catch {
+        restaurants = [];
+    }
+
+    let placed = 0;
+    const markers = [];
+    for (const r of restaurants) {
+        const lat = parseFloat(r.latitude);
+        const lon = parseFloat(r.longitude);
+        if (isNaN(lat) || isNaN(lon) || lat === 0) continue;
+
+        const safeName = r.nome_comercial.replace(/'/g, "\\'").replace(/"/g, '&quot;');
+        const popupHtml =
+            `<div class="map-popup">` +
+            `<strong>${r.nome_comercial}</strong>` +
+            (r.horario    ? `<span class="map-popup-hours">${r.horario}</span>` : '') +
+            (r.localizacao ? `<span class="map-popup-addr">${r.localizacao}</span>` : '') +
+            `<button onclick="showReservationPage('${safeName}')" class="map-popup-btn">Reservar</button>` +
+            `</div>`;
+        const marker = L.marker([lat, lon]).addTo(_mapInstance).bindPopup(popupHtml);
+        markers.push(marker);
+        placed++;
+    }
+
+    if (markers.length > 0) {
+        _mapInstance.fitBounds(L.featureGroup(markers).getBounds().pad(0.12));
+    }
+
+    if (msgEl) {
+        msgEl.textContent = placed > 0
+            ? `${placed} restaurante${placed !== 1 ? 's' : ''} no mapa.`
+            : 'Nenhum restaurante definiu ainda a sua localização. Os restaurantes podem fazê-lo nas Definições do painel.';
+    }
+}
+
+function selectTimeSlot(btn, slot) {
+    document.querySelectorAll('.time-slot-btn').forEach(b => b.classList.remove('selected'));
+    btn.classList.add('selected');
+    selectedTimeSlot = slot;
+}
+
+// Todos os menus
+async function loadAllMenus() {
+    const container = document.getElementById('allMenusContainer');
+    if (!container) return;
+    container.innerHTML = '<p style="color:var(--muted);padding:20px 0">A carregar menus…</p>';
+    try {
+        const res = await fetch(`${API_URL}/restaurants`);
+        const restaurants = await res.json();
+        if (!restaurants.length) {
+            container.innerHTML = '<p style="color:var(--muted)">Sem restaurantes disponíveis.</p>';
+            return;
+        }
+        const groups = await Promise.all(restaurants.map(async r => {
+            try {
+                const mr = await fetch(`${API_URL}/menu/${r.id}`);
+                return { r, items: await mr.json() };
+            } catch { return { r, items: [] }; }
+        }));
+        container.innerHTML = groups.map(({ r, items }) => `
+            <div class="all-menus-group">
+                <div class="all-menus-group-header">${r.nome_comercial}${r.horario ? ' · ' + r.horario : ''}</div>
+                ${items.length
+                    ? items.map(item => `
+                        <div class="all-menus-item">
+                            <div>
+                                <div class="all-menus-item-name">${item.nome_menu}</div>
+                                ${item.descricao ? `<div class="all-menus-item-desc">${item.descricao}</div>` : ''}
+                                ${item.alergenos ? `<div class="all-menus-item-allergens">⚠ ${item.alergenos}</div>` : ''}
+                            </div>
+                            <div class="all-menus-item-price">€${parseFloat(item.preco).toFixed(2)}</div>
+                        </div>`).join('')
+                    : '<div class="all-menus-item" style="color:var(--muted);font-size:0.85rem">Sem itens disponíveis</div>'
+                }
+            </div>`).join('');
+    } catch {
+        container.innerHTML = '<p style="color:#dc2626;padding:20px 0">Erro ao carregar menus.</p>';
+    }
+}
+
+// Definições do utilizador
+async function openSettings() {
+    const session = getStudentSession();
+    if (!session) return;
+    document.getElementById('profileModalAvatar').textContent = session.name.charAt(0).toUpperCase();
+    document.getElementById('profileModalName').textContent = session.name;
+    document.getElementById('profileModalEmail').textContent = session.email || '';
+    const nameInput = document.getElementById('settingNameInput');
+    if (nameInput) nameInput.value = session.name;
+    document.getElementById('profileModal').classList.add('open');
+    document.getElementById('userDropdown').classList.remove('open');
+    ['settingCurrentPwd','settingNewPwd','settingConfirmPwd'].forEach(id => {
+        const el = document.getElementById(id); if (el) el.value = '';
+    });
+    if (session.id) {
+        try {
+            const res = await fetch(`${API_URL}/users/${session.id}`);
+            const data = await res.json();
+            if (data.success) {
+                document.getElementById('walletBalance').textContent =
+                    parseFloat(data.user.saldo || 0).toFixed(2).replace('.', ',');
+                document.getElementById('profileModalEmail').textContent = data.user.email || session.email || '';
+                if (nameInput) nameInput.value = data.user.name || session.name;
+            }
+        } catch { /* server offline, ignore */ }
+    }
+}
+
+function closeSettings() {
+    document.getElementById('profileModal')?.classList.remove('open');
+}
+
+async function changePassword(event) {
+    event.preventDefault();
+    const session = getStudentSession();
+    if (!session?.id) { showToast('Funcionalidade apenas disponível com conta online.', 'info'); return; }
+    const current = document.getElementById('settingCurrentPwd').value;
+    const novo = document.getElementById('settingNewPwd').value;
+    const confirmar = document.getElementById('settingConfirmPwd').value;
+    if (!current || !novo || !confirmar) { showToast('Preencha todos os campos.', 'error'); return; }
+    if (novo !== confirmar) { showToast('As novas passwords não coincidem.', 'error'); return; }
+    if (novo.length < 6) { showToast('A nova password deve ter pelo menos 6 caracteres.', 'error'); return; }
+    try {
+        const res = await fetch(`${API_URL}/users/${session.id}/password`, {
+            method: 'PUT',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ currentPassword: current, newPassword: novo })
+        });
+        const data = await res.json();
+        if (data.success) {
+            showToast('Password alterada com sucesso.', 'success');
+            ['settingCurrentPwd','settingNewPwd','settingConfirmPwd'].forEach(id => {
+                const el = document.getElementById(id); if (el) el.value = '';
+            });
+        } else {
+            showToast(data.message || 'Erro ao alterar password.', 'error');
+        }
+    } catch {
+        showToast('Sem ligação ao servidor.', 'error');
+    }
+}
+
+async function topupWallet(amount) {
+    const session = getStudentSession();
+    if (!session?.id) { showToast('Funcionalidade apenas disponível com conta online.', 'info'); return; }
+    try {
+        const res = await fetch(`${API_URL}/users/${session.id}/topup`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ amount })
+        });
+        const data = await res.json();
+        if (data.success) {
+            document.getElementById('walletBalance').textContent =
+                parseFloat(data.saldo).toFixed(2).replace('.', ',');
+            showToast(`€${amount.toFixed(2)} adicionados à carteira.`, 'success');
+        } else {
+            showToast(data.message || 'Erro ao carregar saldo.', 'error');
+        }
+    } catch {
+        showToast('Sem ligação ao servidor.', 'error');
+    }
+}
+
+async function saveAccountInfo(event) {
+    event.preventDefault();
+    const session = getStudentSession();
+    if (!session?.id) { showToast('Funcionalidade apenas disponível com conta online.', 'info'); return; }
+    const name = document.getElementById('settingNameInput').value.trim();
+    if (!name) { showToast('O nome não pode estar vazio.', 'error'); return; }
+    try {
+        const res = await fetch(`${API_URL}/users/${session.id}`, {
+            method: 'PUT',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ name })
+        });
+        const data = await res.json();
+        if (data.success) {
+            const updated = { ...session, name: data.user.name };
+            localStorage.setItem('unifood_student', JSON.stringify(updated));
+            document.getElementById('userName').textContent = data.user.name;
+            document.getElementById('userAvatar').textContent = data.user.name.charAt(0).toUpperCase();
+            document.getElementById('profileModalAvatar').textContent = data.user.name.charAt(0).toUpperCase();
+            document.getElementById('profileModalName').textContent = data.user.name;
+            showToast('Nome atualizado com sucesso.', 'success');
+        } else {
+            showToast(data.message || 'Erro ao guardar alterações.', 'error');
+        }
+    } catch {
+        showToast('Sem ligação ao servidor.', 'error');
+    }
+}
+
+async function exportMyData() {
+    const session = getStudentSession();
+    if (!session?.id) { showToast('Funcionalidade apenas disponível com conta online.', 'info'); return; }
+    try {
+        const res = await fetch(`${API_URL}/users/${session.id}/export`);
+        const data = await res.json();
+        const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+        const link = document.createElement('a');
+        link.href = URL.createObjectURL(blob);
+        link.download = `unifood-dados-${session.name.replace(/\s+/g, '-').toLowerCase()}.json`;
+        link.click();
+        showToast('Dados exportados com sucesso.', 'success');
+    } catch {
+        showToast('Sem ligação ao servidor.', 'error');
+    }
+}
+
+function togglePrivacyPolicy(btn) {
+    const block = document.getElementById('privacyPolicyBlock');
+    const isHidden = block.style.display === 'none';
+    block.style.display = isHidden ? 'block' : 'none';
+    btn.querySelector('span').textContent = isHidden ? '▾' : '▸';
+}
+
+async function deleteAccount() {
+    const session = getStudentSession();
+    if (!session?.id) { showToast('Funcionalidade apenas disponível com conta online.', 'info'); return; }
+    if (!confirm('Tem a certeza que pretende eliminar a sua conta?\n\nEsta ação é irreversível. Todos os seus dados e reservas serão apagados permanentemente.')) return;
+    try {
+        const res = await fetch(`${API_URL}/users/${session.id}`, { method: 'DELETE' });
+        const data = await res.json();
+        if (data.success) {
+            closeSettings();
+            doLogout();
+            showToast('Conta eliminada com sucesso.', 'success');
+        } else {
+            showToast(data.message || 'Erro ao eliminar conta.', 'error');
+        }
+    } catch {
+        showToast('Sem ligação ao servidor.', 'error');
+    }
+}
+
+// Notificações
+function updateNotifBadge() {
+    const session = getStudentSession();
+    if (!session?.id) return;
+    const acked = JSON.parse(localStorage.getItem('unifood_ack_statuses') || '{}');
+    const unread = allMyReservations.filter(r =>
+        r.status !== 'pending' && acked[String(r.id)] !== r.status
+    );
+    const badge = document.getElementById('notifBadge');
+    if (badge) {
+        badge.textContent = unread.length > 9 ? '9+' : String(unread.length);
+        unread.length > 0 ? badge.classList.remove('hidden') : badge.classList.add('hidden');
+    }
+    const list = document.getElementById('notifList');
+    if (!list) return;
+    const statusColors = { confirmed: '#048045', collected: '#2563eb', cancelled: '#dc2626' };
+    const statusLabels = { confirmed: 'Confirmada', collected: 'Levantada', cancelled: 'Cancelada' };
+    list.innerHTML = unread.length === 0
+        ? '<li class="notif-empty">Sem notificações novas.</li>'
+        : unread.map(r => `
+            <li class="notif-item">
+                <div class="notif-item-dot" style="background:${statusColors[r.status] || '#6b6b6b'}"></div>
+                <div class="notif-item-text"><strong>${r.restaurant}</strong><br>
+                Reserva ${r.token} — ${statusLabels[r.status] || r.status}</div>
+            </li>`).join('');
+}
+
+function toggleNotifPanel() {
+    const panel = document.getElementById('notifPanel');
+    document.getElementById('userDropdown')?.classList.remove('open');
+    panel.classList.toggle('hidden');
+    if (!panel.classList.contains('hidden')) {
+        const acked = JSON.parse(localStorage.getItem('unifood_ack_statuses') || '{}');
+        allMyReservations.forEach(r => { if (r.status !== 'pending') acked[String(r.id)] = r.status; });
+        localStorage.setItem('unifood_ack_statuses', JSON.stringify(acked));
+        const badge = document.getElementById('notifBadge');
+        if (badge) { badge.classList.add('hidden'); badge.textContent = '0'; }
+    }
+}
+
+// Paginação nas minhas reservas
+let _resPage = 0;
+const RES_PAGE_SIZE = 10;
+let _currentFilteredRes = [];
+
+function renderPagedReservations() {
+    const container = document.getElementById('myReservationsList');
+    const visible = _currentFilteredRes.slice(0, (_resPage + 1) * RES_PAGE_SIZE);
+    renderMyReservations(container, visible, allMyUsedTokens);
+    const existing = document.getElementById('resLoadMore');
+    if (_currentFilteredRes.length > visible.length) {
+        if (!existing) {
+            const div = document.createElement('div');
+            div.id = 'resLoadMore';
+            div.style.textAlign = 'center';
+            div.style.marginTop = '12px';
+            div.innerHTML = `<button class="btn btn-ghost" style="min-width:180px" onclick="_resPage++;renderPagedReservations()">Carregar mais</button>`;
+            container.after(div);
+        }
+    } else {
+        existing?.remove();
+    }
+}
+
+function resetReservationSteps() { selectedMealType = null; selectedMenuItem = null; selectedTimeSlot = null; goToStep(1); }
 document.addEventListener('DOMContentLoaded', function () {
     // Restaurar sessão
     const savedSession = localStorage.getItem('unifood_student');
