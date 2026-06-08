@@ -12,7 +12,7 @@ let activeReservationFilter = 'all';
 let menuItems = [];
 let reservations = [];
 let html5QrCode = null;
-const API_URL = API;
+const API_URL = (typeof API !== 'undefined') ? API : 'http://localhost:3000';
 
 const weekDays = ['Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sáb', 'Dom'];
 

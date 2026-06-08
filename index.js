@@ -1,4 +1,4 @@
-const API_URL = API;
+const API_URL = (typeof API !== 'undefined') ? API : 'http://localhost:3000';
 
 function fetchWithTimeout(url, options = {}, ms = 5000) {
     const ctrl = new AbortController();
