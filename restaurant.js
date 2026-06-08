@@ -5,6 +5,19 @@ function fetchWithTimeout(url, options = {}, ms = 5000) {
         .finally(() => clearTimeout(timer));
 }
 
+function showToast(msg, type = 'info') {
+    const container = document.getElementById('toastContainer');
+    if (!container) { console.log(msg); return; }
+    const toast = document.createElement('div');
+    toast.className = `toast ${type}`;
+    toast.textContent = msg;
+    container.appendChild(toast);
+    setTimeout(() => {
+        toast.classList.add('out');
+        setTimeout(() => toast.remove(), 400);
+    }, 3100);
+}
+
 // STATE
 let currentRestaurant = null;  // { id, nome_comercial, user_id, ... }
 let editingItemId = null;
@@ -612,11 +625,13 @@ function cancelReservation(id) {
             if (r) r.status = 'cancelled';
             renderReservations();
             updateStats();
+            showToast('Reserva cancelada com sucesso.', 'success');
         }
     })
     .catch(() => {
         const r = reservations.find(x => x.id === id);
         if (r) { r.status = 'cancelled'; renderReservations(); updateStats(); }
+        showToast('Reserva cancelada com sucesso.', 'success');
     });
 }
 
@@ -691,6 +706,8 @@ function openMenuModal(id = null) {
 
 function closeMenuModal() {
     document.getElementById('menuModal').classList.remove('open');
+    document.getElementById('itemPrice').style.borderColor = '';
+    document.getElementById('priceError').classList.remove('visible');
     editingItemId = null;
 }
 
@@ -701,39 +718,26 @@ function saveMenuItem() {
     const categoria = document.getElementById('itemCategory').value;
     const alergenos = document.getElementById('itemAllergens').value.trim();
 
-    if (!nome_menu || isNaN(preco)) {
-        alert('Preencha o nome e o preço.');
+    if (!nome_menu) {
+        showToast('Preencha o nome do item.', 'error');
+        return;
+    }
+    const priceInput = document.getElementById('itemPrice');
+    const priceError = document.getElementById('priceError');
+    priceInput.style.borderColor = '';
+    priceError.classList.remove('visible');
+
+    if (isNaN(preco) || preco <= 0) {
+        priceInput.style.borderColor = '#dc2626';
+        priceError.classList.add('visible');
+        showToast('O preço deve ser um valor positivo.', 'error');
         return;
     }
 
     if (editingItemId) {
-        // modo demo (sem id real) — atualizar só localmente
-        if (!currentRestaurant.id) {
-            const item = menuItems.find(m => m.id === editingItemId);
-            if (item) { item.name = nome_menu; item.desc = descricao; item.price = preco; item.category = categoria; item.allergens = alergenos; }
-            closeMenuModal(); renderMenu(); updateStats();
-            return;
-        }
-        fetchWithTimeout(`${API_URL}/menu/${editingItemId}`, {
-            method: 'PUT',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ nome_menu, descricao, preco, categoria, alergenos: alergenos || null })
-        })
-        .then(r => r.json())
-        .then(data => {
-            if (data.success) {
-                const item = menuItems.find(m => m.id === editingItemId);
-                if (item) { item.name = nome_menu; item.desc = descricao; item.price = preco; item.category = categoria; item.allergens = alergenos; }
-                closeMenuModal();
-                renderMenu();
-                updateStats();
-            }
-        })
-        .catch(() => {
-            const item = menuItems.find(m => m.id === editingItemId);
-            if (item) { item.name = nome_menu; item.desc = descricao; item.price = preco; item.category = categoria; item.allergens = alergenos; }
-            closeMenuModal(); renderMenu(); updateStats();
-        });
+        pendingSaveData = { id: editingItemId, nome_menu, descricao, preco, categoria, alergenos };
+        document.getElementById('editConfirmModal').classList.add('open');
+        return;
     } else {
         // modo demo (sem id real) — adicionar só localmente
         if (!currentRestaurant.id) {
@@ -771,8 +775,59 @@ function saveMenuItem() {
 
 function editMenuItem(id) { openMenuModal(id); }
 
+let pendingDeleteId = null;
+let pendingSaveData = null;
+
+function closeEditConfirm() {
+    pendingSaveData = null;
+    document.getElementById('editConfirmModal').classList.remove('open');
+}
+
+function confirmSaveMenuItem() {
+    const { id, nome_menu, descricao, preco, categoria, alergenos } = pendingSaveData;
+    closeEditConfirm();
+    if (!currentRestaurant.id) {
+        const item = menuItems.find(m => m.id === id);
+        if (item) { item.name = nome_menu; item.desc = descricao; item.price = preco; item.category = categoria; item.allergens = alergenos; }
+        closeMenuModal(); renderMenu(); updateStats();
+        showToast('Item atualizado com sucesso.', 'success');
+        return;
+    }
+    fetchWithTimeout(`${API_URL}/menu/${id}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ nome_menu, descricao, preco, categoria, alergenos: alergenos || null })
+    })
+    .then(r => r.json())
+    .then(data => {
+        if (data.success) {
+            const item = menuItems.find(m => m.id === id);
+            if (item) { item.name = nome_menu; item.desc = descricao; item.price = preco; item.category = categoria; item.allergens = alergenos; }
+            closeMenuModal(); renderMenu(); updateStats();
+            showToast('Item atualizado com sucesso.', 'success');
+        }
+    })
+    .catch(() => {
+        const item = menuItems.find(m => m.id === id);
+        if (item) { item.name = nome_menu; item.desc = descricao; item.price = preco; item.category = categoria; item.allergens = alergenos; }
+        closeMenuModal(); renderMenu(); updateStats();
+        showToast('Item atualizado com sucesso.', 'success');
+    });
+}
+
 function deleteMenuItem(id) {
-    if (!confirm('Remover este item do menu?')) return;
+    pendingDeleteId = id;
+    document.getElementById('deleteConfirmModal').classList.add('open');
+}
+
+function closeDeleteConfirm() {
+    pendingDeleteId = null;
+    document.getElementById('deleteConfirmModal').classList.remove('open');
+}
+
+function confirmDeleteMenuItem() {
+    const id = pendingDeleteId;
+    closeDeleteConfirm();
     fetchWithTimeout(`${API_URL}/menu/${id}`, { method: 'DELETE' })
     .then(r => r.json())
     .then(data => {
@@ -780,11 +835,13 @@ function deleteMenuItem(id) {
             menuItems = menuItems.filter(m => m.id !== id);
             renderMenu();
             updateStats();
+            showToast('Item removido com sucesso.', 'success');
         }
     })
     .catch(() => {
         menuItems = menuItems.filter(m => m.id !== id);
         renderMenu(); updateStats();
+        showToast('Item removido com sucesso.', 'success');
     });
 }
 

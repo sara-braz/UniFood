@@ -892,6 +892,40 @@ tbody tr:hover td { background: var(--bg); }
 
 .res-notif-panel.hidden { display: none; }
 
+#toastContainer {
+    position: fixed;
+    bottom: 24px;
+    right: 24px;
+    z-index: 9999;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    pointer-events: none;
+}
+.toast {
+    padding: 12px 20px;
+    border-radius: 10px;
+    font-size: 0.9rem;
+    font-weight: 500;
+    color: white;
+    box-shadow: 0 4px 16px rgba(0,0,0,0.18);
+    pointer-events: auto;
+    animation: toastIn 0.3s ease forwards;
+    max-width: 320px;
+}
+.toast.out { animation: toastOut 0.4s ease forwards; }
+.toast.success { background: #048045; }
+.toast.error   { background: #dc2626; }
+.toast.info    { background: #374151; }
+@keyframes toastIn {
+    from { opacity: 0; transform: translateY(14px); }
+    to   { opacity: 1; transform: translateY(0); }
+}
+@keyframes toastOut {
+    from { opacity: 1; transform: translateY(0); }
+    to   { opacity: 0; transform: translateY(10px); }
+}
+
 .res-notif-header {
     padding: 12px 16px;
     font-weight: 700;
