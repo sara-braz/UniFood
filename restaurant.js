@@ -444,6 +444,7 @@ function updateStats() {
                d.getDate()     === today.getDate();
     }).length;
     document.getElementById('statConfirmed').textContent = reservations.filter(r => r.status === 'confirmed').length;
+    document.getElementById('statCollected').textContent = reservations.filter(r => r.status === 'collected').length;
     document.getElementById('statPending').textContent = reservations.filter(r => r.status === 'pending').length;
     document.getElementById('statItems').textContent = menuItems.length;
 
@@ -455,21 +456,31 @@ function updateStats() {
 }
 
 function renderBarChart() {
-    const counts = [0, 0, 0, 0, 0, 0, 0];
-    reservations.forEach(r => {
-        const day = new Date(r.date || Date.now()).getDay();
-        const idx = (day + 6) % 7; // 0=Dom..6=Sab → 0=Seg..6=Dom
-        counts[idx]++;
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+
+    const slots = Array.from({ length: 7 }, (_, i) => {
+        const d = new Date(today);
+        d.setDate(today.getDate() - (6 - i));
+        return d;
     });
-    const todayIdx = (new Date().getDay() + 6) % 7;
+
+    const counts = new Array(7).fill(0);
+    reservations.forEach(r => {
+        const d = new Date(r.date || Date.now());
+        d.setHours(0, 0, 0, 0);
+        const idx = slots.findIndex(s => s.getTime() === d.getTime());
+        if (idx !== -1) counts[idx]++;
+    });
+
     const max = Math.max(...counts, 1);
     const container = document.getElementById('barChart');
-    container.innerHTML = counts.map((v, i) => `
+    container.innerHTML = slots.map((s, i) => `
         <div class="bar-wrap">
-            <div class="bar ${i === todayIdx ? 'today' : ''}"
-                 style="height:${(v / max) * 100}%"
-                 title="${v} reservas"></div>
-            <div class="bar-label">${weekDays[i]}</div>
+            <div class="bar ${i === 6 ? 'today' : ''}"
+                 style="height:${(counts[i] / max) * 100}%"
+                 title="${counts[i]} reservas"></div>
+            <div class="bar-label">${weekDays[(s.getDay() + 6) % 7]}</div>
         </div>
     `).join('');
 }
